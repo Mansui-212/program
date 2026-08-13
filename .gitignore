@@ -3,7 +3,8 @@
 Thumbs.db
 
 # Editor and IDE settings
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 .idea/
 *.swp
 *.swo
@@ -36,3 +37,23 @@ backend/**/__pycache__/
 
 # Backend secrets
 backend/.env
+
+# Frontend local configuration
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Python environment and bytecode
+backend/.venv/
+*.pyo
+*.pyd
+
+# Media storage
+storage/images/*
+storage/audio/*
+storage/temp/*
+!storage/images/.gitkeep
+!storage/audio/.gitkeep
+!storage/temp/.gitkeep

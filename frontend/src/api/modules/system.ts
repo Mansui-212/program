@@ -8,5 +8,5 @@ export interface HealthResponse {
 }
 
 export function getHealth() {
-  return http.get<HealthResponse>('/v1/health')
+  return http.get<HealthResponse>('/v1/system/health')
 }
