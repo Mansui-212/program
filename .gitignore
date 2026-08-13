@@ -27,3 +27,12 @@ yarn-error.log*
 
 # venv
 venv/
+
+# Python backend
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+*.pyc
+
+# Backend secrets
+backend/.env
