@@ -17,6 +17,10 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
+    setUser(user: User) {
+      this.user = user
+    },
+
     async register(payload: RegisterPayload) {
       const response = await registerRequest(payload)
 

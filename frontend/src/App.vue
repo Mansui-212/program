@@ -92,15 +92,17 @@ onMounted(() => {
         <a class="text-action" href="#contribute">投稿</a>
         <div class="user-entry">
           <template v-if="authStore.isLoggedIn && authStore.user">
-            <img
-              class="user-avatar"
-              :src="authStore.user.avatar_url || defaultAvatar"
-              :alt="authStore.user.username"
-            />
-            <span class="user-pill">
-              {{ authStore.user.username }} · UID {{ authStore.user.id }} · 哈气值
-              {{ authStore.user.haki_value }}
-            </span>
+            <RouterLink to="/profile" class="user-profile-link">
+              <img
+                class="user-avatar"
+                :src="authStore.user.avatar_url || defaultAvatar"
+                :alt="authStore.user.username"
+              />
+              <span>
+                {{ authStore.user.username }} · UID {{ authStore.user.id }} · 哈气值
+                {{ authStore.user.haki_value }}
+              </span>
+            </RouterLink>
             <button type="button" @click="authStore.logout()">退出</button>
           </template>
 
@@ -389,22 +391,26 @@ onMounted(() => {
   gap: 10px;
 }
 
-.user-pill {
-  padding: 9px 13px;
-  border-radius: 10px;
+.user-profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 13px 6px 6px;
+  border-radius: 999px;
   background: #fff4ca;
   color: #594828;
   font-size: 13px;
   font-weight: 800;
+  text-decoration: none;
   white-space: nowrap;
 }
 
 .user-avatar {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border: 2px solid #f6c534;
   border-radius: 50%;
-  background: #fffaf0;
+  background: #fffdf7;
   object-fit: cover;
 }
 

@@ -5,6 +5,7 @@ from app.api.v1.characters import router as characters_router
 from app.api.v1.memes import router as memes_router
 from app.api.v1.music_tracks import router as music_tracks_router
 from app.api.v1.system import router as system_router
+from app.api.v1.users import router as users_router
 
 
 api_router = APIRouter()
@@ -37,4 +38,10 @@ api_router.include_router(
     auth_router,
     prefix="/auth",
     tags=["auth"],
+)
+
+api_router.include_router(
+    users_router,
+    prefix="/users",
+    tags=["users"],
 )
