@@ -76,3 +76,8 @@ class Character(Base):
         "Meme",
         back_populates="character",
     )
+
+    music_tracks: Mapped[list["MusicTrack"]] = relationship(
+        "MusicTrack",
+        back_populates="character",
+    )

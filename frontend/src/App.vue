@@ -4,8 +4,10 @@ import { useRoute } from 'vue-router'
 
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getLatestMemes } from '@/api/modules/memes'
+import { getFeaturedMusicTracks } from '@/api/modules/musicTracks'
 import type { Character } from '@/types/character'
 import type { Meme } from '@/types/meme'
+import type { MusicTrack } from '@/types/musicTrack'
 
 const characters = ref<Character[]>([])
 const charactersLoading = ref(true)
@@ -13,6 +15,9 @@ const charactersError = ref(false)
 const latestMemes = ref<Meme[]>([])
 const memesLoading = ref(true)
 const memesError = ref(false)
+const featuredMusicTracks = ref<MusicTrack[]>([])
+const musicLoading = ref(true)
+const musicError = ref(false)
 const route = useRoute()
 
 async function loadCharacters() {
@@ -39,18 +44,25 @@ async function loadLatestMemes() {
   }
 }
 
+async function loadFeaturedMusicTracks() {
+  try {
+    const response = await getFeaturedMusicTracks(4)
+    featuredMusicTracks.value = response.data
+  } catch (error) {
+    console.error('加载音乐推荐失败', error)
+    musicError.value = true
+  } finally {
+    musicLoading.value = false
+  }
+}
+
 onMounted(() => {
   if (route.path === '/') {
     loadCharacters()
     loadLatestMemes()
+    loadFeaturedMusicTracks()
   }
 })
-
-const albums = [
-  { title: '午后慢慢转', character: '耄耋 · 轻松循环', tone: 'maodie', icon: '☀' },
-  { title: '鼠鼠的口袋歌', character: '鼠鼠 · 轻快收藏', tone: 'shushu', icon: '✿' },
-  { title: '曼波不下班', character: '曼波 · 随时摇摆', tone: 'manbo', icon: '♪' },
-]
 </script>
 
 <template>
@@ -163,23 +175,28 @@ const albums = [
         <div class="section-heading">
           <div>
             <p class="eyebrow">LISTEN TO HAKIMI</p>
-            <h2>音乐推荐</h2>
+            <h2>哈基米改编音乐</h2>
           </div>
           <a class="section-link" href="#music">更多歌单 <span>→</span></a>
         </div>
 
-        <div class="album-grid">
-          <article v-for="album in albums" :key="album.title" class="album-card">
-            <div class="record-wrap">
-              <div class="record" :class="album.tone">
-                <span>{{ album.icon }}</span>
-              </div>
-              <div class="record-hole"></div>
+        <div class="music-grid">
+          <p v-if="musicLoading" class="collection-message">正在加载哈基米音乐...</p>
+          <p v-else-if="musicError" class="collection-message">音乐推荐暂时无法加载。</p>
+          <article v-for="track in featuredMusicTracks" v-else :key="track.id" class="music-card">
+            <div class="music-cover">
+              <img v-if="track.cover_url" :src="track.cover_url" :alt="track.title" />
+              <span v-else>♪</span>
             </div>
-            <div class="album-copy">
-              <p>{{ album.character }}</p>
-              <h3>{{ album.title }}</h3>
-              <button type="button" class="play-button"><span>▶</span> 播放试听</button>
+
+            <div class="music-info">
+              <h3>{{ track.title }}</h3>
+              <p>{{ track.description || '这首哈基米音乐正在整理资料。' }}</p>
+              <div class="music-meta">
+                <span>{{ track.author_name || '未知作者' }}</span>
+                <span>播放 {{ track.play_count }}</span>
+              </div>
+              <audio class="music-audio" :src="track.audio_url" controls preload="metadata" />
             </div>
           </article>
         </div>
@@ -753,6 +770,72 @@ const albums = [
   content: '·';
 }
 
+.music-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.music-card {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 20px;
+  padding: 18px;
+  border: 1px solid #f0eadf;
+  border-radius: 28px;
+  background: #fffefa;
+  box-shadow: 0 10px 26px rgba(70, 59, 37, 0.06);
+}
+
+.music-cover {
+  display: grid;
+  width: 120px;
+  height: 120px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fff6cf, #ffe3ec);
+  color: #25231f;
+  font-size: 42px;
+  font-weight: 900;
+}
+
+.music-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.music-info h3 {
+  margin: 0;
+  color: #38342d;
+  font-size: 20px;
+}
+
+.music-info p {
+  margin: 8px 0 0;
+  color: #787166;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.music-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  color: #a58a55;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.music-audio {
+  width: 100%;
+  height: 34px;
+  margin-top: 12px;
+}
+
 .album-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -974,6 +1057,10 @@ const albums = [
     grid-template-columns: 1fr;
   }
 
+  .music-grid {
+    grid-template-columns: 1fr;
+  }
+
   .chronicle-card {
     grid-template-columns: 1fr;
   }
@@ -1113,6 +1200,18 @@ const albums = [
     min-height: 100%;
     height: 100%;
     aspect-ratio: auto;
+  }
+
+  .music-card {
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .music-cover {
+    width: 96px;
+    height: 96px;
+    border-radius: 20px;
   }
 
   .chronicle-card {
