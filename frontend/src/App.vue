@@ -2,11 +2,16 @@
 import { onMounted, ref } from 'vue'
 
 import { getFeaturedCharacters } from '@/api/modules/characters'
+import { getLatestMemes } from '@/api/modules/memes'
 import type { Character } from '@/types/character'
+import type { Meme } from '@/types/meme'
 
 const characters = ref<Character[]>([])
 const charactersLoading = ref(true)
 const charactersError = ref(false)
+const latestMemes = ref<Meme[]>([])
+const memesLoading = ref(true)
+const memesError = ref(false)
 
 async function loadCharacters() {
   try {
@@ -20,16 +25,22 @@ async function loadCharacters() {
   }
 }
 
+async function loadLatestMemes() {
+  try {
+    const response = await getLatestMemes(8)
+    latestMemes.value = response.data
+  } catch (error) {
+    console.error('加载最新表情包失败', error)
+    memesError.value = true
+  } finally {
+    memesLoading.value = false
+  }
+}
+
 onMounted(() => {
   loadCharacters()
+  loadLatestMemes()
 })
-
-const memes = [
-  { character: '耄耋', title: '今日宜缓缓', tone: 'maodie', icon: '☁' },
-  { character: '鼠鼠', title: '小鼠出没', tone: 'shushu', icon: '✦' },
-  { character: 'Doro', title: 'Doro 一下', tone: 'doro', icon: '◌' },
-  { character: '曼波', title: '曼波时间到', tone: 'manbo', icon: '♫' },
-]
 
 const albums = [
   { title: '午后慢慢转', character: '耄耋 · 轻松循环', tone: 'maodie', icon: '☀' },
@@ -117,24 +128,25 @@ const albums = [
         <div class="section-heading">
           <div>
             <p class="eyebrow">MEME CORNER</p>
-            <h2>热门表情包</h2>
+            <h2>最新表情包</h2>
           </div>
           <a class="section-link" href="#memes">去表情包馆 <span>→</span></a>
         </div>
 
         <div class="meme-grid">
-          <article v-for="meme in memes" :key="meme.title" class="meme-card">
-            <div class="meme-preview" :class="meme.tone" aria-hidden="true">
-              <span>{{ meme.icon }}</span>
-              <i>{{ meme.character }}</i>
+          <p v-if="memesLoading" class="collection-message">正在加载最新表情包...</p>
+          <p v-else-if="memesError" class="collection-message">表情包暂时无法加载。</p>
+          <article v-for="meme in latestMemes" v-else :key="meme.id" class="meme-card">
+            <div class="meme-preview">
+              <img class="meme-image" :src="meme.image_url" :alt="meme.title" />
             </div>
             <div class="meme-info">
-              <span class="tag">{{ meme.character }}</span>
+              <span class="tag">{{ meme.source_name || '最新收录' }}</span>
               <h3>{{ meme.title }}</h3>
+              <p v-if="meme.description">{{ meme.description }}</p>
               <div class="meme-actions">
-                <button type="button">复制</button>
-                <button type="button">下载</button>
-                <button type="button" aria-label="查看来源">来源 ↗</button>
+                <span>{{ meme.file_type === 'gif' ? 'GIF 动图' : '图片' }}</span>
+                <span v-if="meme.author_name">收录：{{ meme.author_name }}</span>
               </div>
             </div>
           </article>
@@ -673,37 +685,17 @@ const albums = [
 }
 
 .meme-preview {
-  position: relative;
-  display: grid;
+  background: #f5efdf;
   min-height: 190px;
-  place-items: center;
   overflow: hidden;
-  background: linear-gradient(135deg, var(--soft) 0%, var(--light) 100%);
 }
 
-.meme-preview::after {
-  position: absolute;
-  width: 140px;
-  height: 140px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 50%;
-  content: '';
-}
-
-.meme-preview span {
-  z-index: 1;
-  color: var(--deep);
-  font-size: 54px;
-}
-
-.meme-preview i {
-  position: absolute;
-  right: 14px;
-  bottom: 12px;
-  color: var(--deep);
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 800;
+.meme-image {
+  display: block;
+  width: 100%;
+  min-height: 190px;
+  aspect-ratio: 1 / 0.84;
+  object-fit: cover;
 }
 
 .meme-info {
@@ -725,22 +717,31 @@ const albums = [
   font-size: 17px;
 }
 
+.meme-info p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 8px 0 0;
+  color: #787166;
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .meme-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: 14px;
 }
 
-.meme-actions button {
-  border: 0;
-  padding: 0;
-  background: transparent;
+.meme-actions span {
   color: #888076;
   font-size: 11px;
   font-weight: 700;
 }
 
-.meme-actions button + button::before {
+.meme-actions span + span::before {
   margin-right: 8px;
   color: #d5ccbc;
   content: '·';
@@ -1102,9 +1103,10 @@ const albums = [
     min-height: 100%;
   }
 
-  .meme-preview::after {
-    width: 92px;
-    height: 92px;
+  .meme-image {
+    min-height: 100%;
+    height: 100%;
+    aspect-ratio: auto;
   }
 
   .chronicle-card {

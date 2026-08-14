@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 
@@ -70,4 +70,9 @@ class Character(Base):
         server_default=func.now(),
         onupdate=func.now(),
         nullable=False,
+    )
+
+    memes: Mapped[list["Meme"]] = relationship(
+        "Meme",
+        back_populates="character",
     )
