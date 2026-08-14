@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getMemes } from '@/api/modules/memes'
+import MemePreviewModal from '@/components/MemePreviewModal.vue'
 
 import type { Character } from '@/types/character'
 import type { Meme } from '@/types/meme'
@@ -14,6 +15,7 @@ const loading = ref(true)
 const selectedCharacterSlug = ref('')
 const selectedOrder = ref<'latest' | 'featured' | 'popular'>('latest')
 const keyword = ref('')
+const selectedMeme = ref<Meme | null>(null)
 
 async function loadCharacters() {
   const response = await getFeaturedCharacters()
@@ -51,6 +53,14 @@ function changeOrder(order: 'latest' | 'featured' | 'popular') {
 
 function searchMemes() {
   loadMemes()
+}
+
+function openMeme(meme: Meme) {
+  selectedMeme.value = meme
+}
+
+function closeMeme() {
+  selectedMeme.value = null
 }
 
 onMounted(async () => {
@@ -132,7 +142,7 @@ onMounted(async () => {
       <p v-else-if="memes.length === 0" class="empty-text">暂时没有找到对应表情包。</p>
 
       <div v-else class="meme-grid">
-        <article v-for="meme in memes" :key="meme.id" class="meme-card">
+        <article v-for="meme in memes" :key="meme.id" class="meme-card" @click="openMeme(meme)">
           <img :src="meme.image_url" :alt="meme.title" />
 
           <div class="meme-card-body">
@@ -148,6 +158,8 @@ onMounted(async () => {
         </article>
       </div>
     </section>
+
+    <MemePreviewModal :meme="selectedMeme" @close="closeMeme" />
   </main>
 </template>
 
@@ -257,6 +269,7 @@ onMounted(async () => {
   border-radius: 28px;
   background: #fffaf0;
   box-shadow: 0 18px 40px rgba(79, 61, 32, 0.08);
+  cursor: pointer;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;

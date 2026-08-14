@@ -3,6 +3,16 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
+class MemeCharacterRead(BaseModel):
+    id: int
+    slug: str
+    name: str
+    avatar_url: str | None = None
+    theme_color: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class MemeRead(BaseModel):
     id: int
     slug: str
@@ -22,3 +32,7 @@ class MemeRead(BaseModel):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MemeDetailRead(MemeRead):
+    character: MemeCharacterRead | None = None

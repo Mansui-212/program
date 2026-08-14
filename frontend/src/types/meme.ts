@@ -16,3 +16,15 @@ export interface Meme {
   created_at: string
   updated_at: string
 }
+
+export interface MemeCharacter {
+  id: number
+  slug: string
+  name: string
+  avatar_url: string | null
+  theme_color: string | null
+}
+
+export interface MemeDetail extends Meme {
+  character: MemeCharacter | null
+}

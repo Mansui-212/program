@@ -1,13 +1,13 @@
 from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
 from app.models.character import Character
 from app.models.meme import Meme
-from app.schemas.meme import MemeRead
+from app.schemas.meme import MemeDetailRead, MemeRead
 
 
 router = APIRouter()
@@ -73,3 +73,29 @@ def list_featured_memes(
     )
 
     return db.scalars(statement).all()
+
+
+@router.get("/{slug}", response_model=MemeDetailRead)
+def get_meme_detail(
+    slug: str,
+    db: Session = Depends(get_db),
+):
+    statement = (
+        select(Meme)
+        .options(selectinload(Meme.character))
+        .where(Meme.slug == slug)
+    )
+
+    meme = db.scalars(statement).first()
+
+    if meme is None:
+        raise HTTPException(
+            status_code=404,
+            detail="表情包不存在",
+        )
+
+    meme.view_count += 1
+    db.commit()
+    db.refresh(meme)
+
+    return meme

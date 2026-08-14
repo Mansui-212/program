@@ -1,6 +1,6 @@
 import http from '@/api/http'
 
-import type { Meme } from '@/types/meme'
+import type { Meme, MemeDetail } from '@/types/meme'
 
 export interface GetMemesParams {
   limit?: number
@@ -30,4 +30,8 @@ export function getFeaturedMemes(limit = 8) {
       limit,
     },
   })
+}
+
+export function getMemeDetail(slug: string) {
+  return http.get<MemeDetail>(`/v1/memes/${slug}`)
 }
