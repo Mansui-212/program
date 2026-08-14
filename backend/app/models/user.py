@@ -27,11 +27,6 @@ class User(Base):
         nullable=False,
     )
 
-    nickname: Mapped[str] = mapped_column(
-        String(80),
-        nullable=False,
-    )
-
     avatar_url: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,

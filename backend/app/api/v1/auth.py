@@ -74,7 +74,6 @@ def register_user(
     user = User(
         username=data.username,
         password_hash=hash_password(data.password),
-        nickname=data.nickname,
         haki_value=0,
         role="user",
     )

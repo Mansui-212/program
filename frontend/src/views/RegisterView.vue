@@ -9,8 +9,8 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const username = ref('')
-const nickname = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const error = ref('')
 const loading = ref(false)
 
@@ -24,12 +24,17 @@ function getErrorMessage(reason: unknown, fallback: string) {
 
 async function submitRegister() {
   error.value = ''
+
+  if (password.value !== confirmPassword.value) {
+    error.value = '两次输入的密码不一致'
+    return
+  }
+
   loading.value = true
 
   try {
     await authStore.register({
       username: username.value,
-      nickname: nickname.value,
       password: password.value,
     })
 
@@ -56,14 +61,20 @@ async function submitRegister() {
         </label>
 
         <label>
-          昵称
-          <input v-model="nickname" type="text" autocomplete="nickname" required />
-        </label>
-
-        <label>
           密码
           <input
             v-model="password"
+            type="password"
+            autocomplete="new-password"
+            required
+            minlength="6"
+          />
+        </label>
+
+        <label>
+          确认密码
+          <input
+            v-model="confirmPassword"
             type="password"
             autocomplete="new-password"
             required

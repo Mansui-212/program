@@ -6,7 +6,6 @@ from pydantic import BaseModel, ConfigDict, Field
 class UserRegister(BaseModel):
     username: str = Field(min_length=3, max_length=50)
     password: str = Field(min_length=6, max_length=100)
-    nickname: str = Field(min_length=1, max_length=80)
 
 
 class UserLogin(BaseModel):
@@ -17,7 +16,6 @@ class UserLogin(BaseModel):
 class UserRead(BaseModel):
     id: int
     username: str
-    nickname: str
     avatar_url: str | None = None
     haki_value: int
     role: str

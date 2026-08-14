@@ -5,7 +5,6 @@ import type { AuthResponse, User } from '@/types/user'
 export interface RegisterPayload {
   username: string
   password: string
-  nickname: string
 }
 
 export interface LoginPayload {

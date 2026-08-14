@@ -92,7 +92,8 @@ onMounted(() => {
         <div class="user-entry">
           <template v-if="authStore.isLoggedIn && authStore.user">
             <span class="user-pill">
-              {{ authStore.user.nickname }} · 哈气值 {{ authStore.user.haki_value }}
+              {{ authStore.user.username }} · UID {{ authStore.user.id }} · 哈气值
+              {{ authStore.user.haki_value }}
             </span>
             <button type="button" @click="authStore.logout()">退出</button>
           </template>
