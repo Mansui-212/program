@@ -57,7 +57,7 @@ async function submitRegister() {
       <form @submit.prevent="submitRegister">
         <label>
           用户名
-          <input v-model="username" type="text" autocomplete="username" required minlength="3" />
+          <input v-model="username" type="text" autocomplete="username" required minlength="2" />
         </label>
 
         <label>
