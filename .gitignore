@@ -55,5 +55,8 @@ storage/images/*
 storage/audio/*
 storage/temp/*
 !storage/images/.gitkeep
+!storage/images/avatars/
+storage/images/avatars/*
+!storage/images/avatars/maodie.jpg
 !storage/audio/.gitkeep
 !storage/temp/.gitkeep

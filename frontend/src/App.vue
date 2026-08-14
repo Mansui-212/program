@@ -21,6 +21,7 @@ const musicLoading = ref(true)
 const musicError = ref(false)
 const route = useRoute()
 const authStore = useAuthStore()
+const defaultAvatar = '/static/images/avatars/maodie.jpg'
 
 async function loadCharacters() {
   try {
@@ -91,6 +92,11 @@ onMounted(() => {
         <a class="text-action" href="#contribute">投稿</a>
         <div class="user-entry">
           <template v-if="authStore.isLoggedIn && authStore.user">
+            <img
+              class="user-avatar"
+              :src="authStore.user.avatar_url || defaultAvatar"
+              :alt="authStore.user.username"
+            />
             <span class="user-pill">
               {{ authStore.user.username }} · UID {{ authStore.user.id }} · 哈气值
               {{ authStore.user.haki_value }}
@@ -391,6 +397,15 @@ onMounted(() => {
   font-size: 13px;
   font-weight: 800;
   white-space: nowrap;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #f6c534;
+  border-radius: 50%;
+  background: #fffaf0;
+  object-fit: cover;
 }
 
 .user-entry a,
