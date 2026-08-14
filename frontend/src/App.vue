@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getLatestMemes } from '@/api/modules/memes'
 import { getFeaturedMusicTracks } from '@/api/modules/musicTracks'
+import { useAuthStore } from '@/stores/auth'
 import type { Character } from '@/types/character'
 import type { Meme } from '@/types/meme'
 import type { MusicTrack } from '@/types/musicTrack'
@@ -19,6 +20,7 @@ const featuredMusicTracks = ref<MusicTrack[]>([])
 const musicLoading = ref(true)
 const musicError = ref(false)
 const route = useRoute()
+const authStore = useAuthStore()
 
 async function loadCharacters() {
   try {
@@ -57,6 +59,8 @@ async function loadFeaturedMusicTracks() {
 }
 
 onMounted(() => {
+  authStore.fetchMe()
+
   if (route.path === '/') {
     loadCharacters()
     loadLatestMemes()
@@ -80,12 +84,24 @@ onMounted(() => {
         <RouterLink to="/memes">表情包</RouterLink>
         <RouterLink to="/music">音乐馆</RouterLink>
         <a href="#chronicle">编年史</a>
-        <button class="mobile-login" type="button">登录</button>
+        <RouterLink class="mobile-login" to="/login">登录</RouterLink>
       </nav>
 
       <div class="nav-actions">
         <a class="text-action" href="#contribute">投稿</a>
-        <button class="login-button" type="button">登录</button>
+        <div class="user-entry">
+          <template v-if="authStore.isLoggedIn && authStore.user">
+            <span class="user-pill">
+              {{ authStore.user.nickname }} · 哈气值 {{ authStore.user.haki_value }}
+            </span>
+            <button type="button" @click="authStore.logout()">退出</button>
+          </template>
+
+          <template v-else>
+            <RouterLink to="/login">登录</RouterLink>
+            <RouterLink to="/register">注册</RouterLink>
+          </template>
+        </div>
       </div>
     </header>
 
@@ -360,7 +376,24 @@ onMounted(() => {
   justify-self: end;
 }
 
-.login-button {
+.user-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-pill {
+  padding: 9px 13px;
+  border-radius: 10px;
+  background: #fff4ca;
+  color: #594828;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.user-entry a,
+.user-entry button {
   border: 1px solid #e8dfc9;
   border-radius: 10px;
   padding: 9px 16px;
@@ -368,6 +401,7 @@ onMounted(() => {
   color: #403d36;
   font-size: 14px;
   font-weight: 700;
+  text-decoration: none;
 }
 
 .hero {
