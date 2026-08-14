@@ -89,7 +89,7 @@ onMounted(() => {
       </nav>
 
       <div class="nav-actions">
-        <a class="text-action" href="#contribute">投稿</a>
+        <RouterLink class="text-action" to="/submit">投稿</RouterLink>
         <div class="user-entry">
           <template v-if="authStore.isLoggedIn && authStore.user">
             <RouterLink to="/profile" class="user-profile-link">
@@ -254,7 +254,7 @@ onMounted(() => {
             <h2>投稿与哈气值</h2>
             <p>上传作品，增加你的哈气值。好内容值得被更多人看见。</p>
           </div>
-          <button type="button" class="button button-primary">我要投稿 <span>↗</span></button>
+          <RouterLink to="/submit" class="button button-primary">我要投稿 <span>↗</span></RouterLink>
         </div>
       </section>
     </main>

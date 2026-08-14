@@ -44,6 +44,11 @@ const router = createRouter({
       name: 'profile',
       component: () => import('@/views/ProfileView.vue'),
     },
+    {
+      path: '/submit',
+      name: 'submit',
+      component: () => import('@/views/SubmitView.vue'),
+    },
   ],
 })
 

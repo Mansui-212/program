@@ -60,3 +60,16 @@ storage/images/avatars/*
 !storage/images/avatars/maodie.jpg
 !storage/audio/.gitkeep
 !storage/temp/.gitkeep
+
+# User uploads
+storage/uploads/*
+!storage/uploads/.gitkeep
+!storage/uploads/submissions/
+storage/uploads/submissions/*
+!storage/uploads/submissions/.gitkeep
+!storage/uploads/submissions/memes/
+!storage/uploads/submissions/memes/.gitkeep
+!storage/uploads/submissions/music/
+!storage/uploads/submissions/music/.gitkeep
+!storage/uploads/submissions/covers/
+!storage/uploads/submissions/covers/.gitkeep
