@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 
 import TurntablePlayer from '@/components/TurntablePlayer.vue'
 import { getFeaturedCharacters } from '@/api/modules/characters'
@@ -58,8 +58,18 @@ async function loadTracks() {
   }
 }
 
-function selectTrack(track: MusicTrack) {
+async function selectTrack(track: MusicTrack) {
+  const isSameTrack = currentTrack.value?.id === track.id
+
   currentTrack.value = track
+
+  if (isSameTrack) {
+    isPlaying.value = !isPlaying.value
+    return
+  }
+
+  isPlaying.value = false
+  await nextTick()
   isPlaying.value = true
 }
 
@@ -81,27 +91,47 @@ function handlePlayingChange(value: boolean) {
   isPlaying.value = value
 }
 
-function playNextTrack() {
-  if (!currentTrack.value || tracks.value.length === 0) return
+async function playNextTrack() {
+  if (tracks.value.length === 0) return
+
+  if (!currentTrack.value) {
+    currentTrack.value = tracks.value[0] ?? null
+    isPlaying.value = false
+    await nextTick()
+    isPlaying.value = true
+    return
+  }
 
   const currentIndex = tracks.value.findIndex(
     (track) => track.id === currentTrack.value?.id,
   )
-  const nextIndex = (currentIndex + 1) % tracks.value.length
+  const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % tracks.value.length
 
   currentTrack.value = tracks.value[nextIndex] ?? null
+  isPlaying.value = false
+  await nextTick()
   isPlaying.value = true
 }
 
-function playPrevTrack() {
-  if (!currentTrack.value || tracks.value.length === 0) return
+async function playPrevTrack() {
+  if (tracks.value.length === 0) return
+
+  if (!currentTrack.value) {
+    currentTrack.value = tracks.value[0] ?? null
+    isPlaying.value = false
+    await nextTick()
+    isPlaying.value = true
+    return
+  }
 
   const currentIndex = tracks.value.findIndex(
     (track) => track.id === currentTrack.value?.id,
   )
-  const prevIndex = (currentIndex - 1 + tracks.value.length) % tracks.value.length
+  const prevIndex = currentIndex === -1 ? 0 : (currentIndex - 1 + tracks.value.length) % tracks.value.length
 
   currentTrack.value = tracks.value[prevIndex] ?? null
+  isPlaying.value = false
+  await nextTick()
   isPlaying.value = true
 }
 

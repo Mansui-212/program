@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import type { MusicTrack } from '@/types/musicTrack'
 
@@ -65,82 +65,51 @@ function handleProgressInput(event: Event) {
   currentTime.value = audio.currentTime
 }
 
-async function syncPlayback() {
+function resetTrack() {
   currentTime.value = 0
   duration.value = props.track?.duration_seconds || 0
   progressValue.value = 0
 
-  await nextTick()
-
-  const audio = audioRef.value
-
-  if (!audio || !props.track) {
-    audio?.pause()
-    return
-  }
-
-  audio.load()
-
-  if (!props.isPlaying) return
-
-  try {
-    await audio.play()
-  } catch (error) {
-    console.error('自动播放失败', error)
-    emit('update:playing', false)
-  }
-}
-
-async function togglePlay() {
   const audio = audioRef.value
 
   if (!audio || !props.track) return
 
-  if (props.isPlaying) {
-    audio.pause()
-    emit('update:playing', false)
-    return
-  }
+  audio.load()
+}
 
-  try {
-    await audio.play()
-    emit('update:playing', true)
-  } catch (error) {
-    console.error('播放失败', error)
-    emit('update:playing', false)
-  }
+function togglePlay() {
+  if (!props.track) return
+
+  emit('update:playing', !props.isPlaying)
 }
 
 function handleEnded() {
-  currentTime.value = duration.value
-  progressValue.value = 100
   emit('next')
-}
-
-function handlePlay() {
-  emit('update:playing', true)
-}
-
-function handlePause() {
-  emit('update:playing', false)
 }
 
 watch(
   () => props.track?.audio_url,
   () => {
-    syncPlayback()
+    resetTrack()
+  },
+  {
+    flush: 'post',
   },
 )
 
 watch(
   () => props.isPlaying,
-  async (isPlaying) => {
+  async (value) => {
     const audio = audioRef.value
 
     if (!audio || !props.track) return
 
-    if (isPlaying) {
+    if (value) {
       try {
+        if (audio.ended) {
+          audio.currentTime = 0
+        }
+
         await audio.play()
       } catch (error) {
         console.error('播放失败', error)
@@ -149,6 +118,9 @@ watch(
     } else {
       audio.pause()
     }
+  },
+  {
+    flush: 'post',
   },
 )
 </script>
@@ -217,8 +189,6 @@ watch(
           @ended="handleEnded"
           @durationchange="handleLoadedMetadata"
           @loadedmetadata="handleLoadedMetadata"
-          @pause="handlePause"
-          @play="handlePlay"
           @timeupdate="handleTimeUpdate"
         />
       </div>
