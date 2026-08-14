@@ -1,8 +1,11 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.character import Character
 from app.models.meme import Meme
 from app.schemas.meme import MemeRead
 
@@ -14,12 +17,31 @@ router = APIRouter()
 def list_memes(
     db: Session = Depends(get_db),
     limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    character_slug: str | None = Query(default=None),
+    keyword: str | None = Query(default=None),
+    order: Literal["latest", "featured", "popular"] = Query(default="latest"),
 ):
-    statement = (
-        select(Meme)
-        .order_by(Meme.sort_order.asc(), Meme.id.desc())
-        .limit(limit)
-    )
+    statement = select(Meme)
+
+    if character_slug:
+        statement = (
+            statement.join(Character, Meme.character_id == Character.id)
+            .where(Character.slug == character_slug)
+        )
+
+    if keyword:
+        like_keyword = f"%{keyword}%"
+        statement = statement.where(Meme.title.like(like_keyword))
+
+    if order == "featured":
+        statement = statement.order_by(Meme.sort_order.asc(), Meme.id.desc())
+    elif order == "popular":
+        statement = statement.order_by(Meme.view_count.desc(), Meme.id.desc())
+    else:
+        statement = statement.order_by(Meme.created_at.desc(), Meme.id.desc())
+
+    statement = statement.offset(offset).limit(limit)
 
     return db.scalars(statement).all()
 

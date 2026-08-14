@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getLatestMemes } from '@/api/modules/memes'
@@ -12,6 +13,7 @@ const charactersError = ref(false)
 const latestMemes = ref<Meme[]>([])
 const memesLoading = ref(true)
 const memesError = ref(false)
+const route = useRoute()
 
 async function loadCharacters() {
   try {
@@ -38,8 +40,10 @@ async function loadLatestMemes() {
 }
 
 onMounted(() => {
-  loadCharacters()
-  loadLatestMemes()
+  if (route.path === '/') {
+    loadCharacters()
+    loadLatestMemes()
+  }
 })
 
 const albums = [
@@ -50,7 +54,9 @@ const albums = [
 </script>
 
 <template>
-  <div class="site-shell">
+  <RouterView v-if="route.path !== '/'" />
+
+  <div v-else class="site-shell">
     <header class="topbar">
       <a class="brand" href="#top" aria-label="基米小站首页">
         <span class="brand-mark">基</span>
@@ -59,7 +65,7 @@ const albums = [
 
       <nav class="main-nav" aria-label="主导航">
         <a href="#characters">角色馆</a>
-        <a href="#memes">表情包</a>
+        <RouterLink to="/memes">表情包</RouterLink>
         <a href="#music">音乐馆</a>
         <a href="#chronicle">编年史</a>
         <button class="mobile-login" type="button">登录</button>
@@ -130,7 +136,7 @@ const albums = [
             <p class="eyebrow">MEME CORNER</p>
             <h2>最新表情包</h2>
           </div>
-          <a class="section-link" href="#memes">去表情包馆 <span>→</span></a>
+          <RouterLink class="section-link" to="/memes">去表情包馆 <span>→</span></RouterLink>
         </div>
 
         <div class="meme-grid">
