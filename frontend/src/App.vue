@@ -78,7 +78,7 @@ onMounted(() => {
       <nav class="main-nav" aria-label="主导航">
         <a href="#characters">角色馆</a>
         <RouterLink to="/memes">表情包</RouterLink>
-        <a href="#music">音乐馆</a>
+        <RouterLink to="/music">音乐馆</RouterLink>
         <a href="#chronicle">编年史</a>
         <button class="mobile-login" type="button">登录</button>
       </nav>
@@ -177,7 +177,7 @@ onMounted(() => {
             <p class="eyebrow">LISTEN TO HAKIMI</p>
             <h2>哈基米改编音乐</h2>
           </div>
-          <a class="section-link" href="#music">更多歌单 <span>→</span></a>
+          <RouterLink class="section-link" to="/music">查看全部音乐 <span>→</span></RouterLink>
         </div>
 
         <div class="music-grid">
