@@ -47,13 +47,14 @@ watch(
         <RouterLink :to="{ path: '/', hash: '#characters' }">角色档案</RouterLink>
         <RouterLink to="/memes">表情包</RouterLink>
         <RouterLink to="/music">音乐</RouterLink>
-        <RouterLink :to="{ path: '/memes', hash: '#search' }">搜索</RouterLink>
+        <RouterLink to="/search">搜索</RouterLink>
       </nav>
 
       <div class="header-actions">
         <RouterLink class="submit-link" to="/submit">投稿</RouterLink>
 
         <template v-if="authStore.isLoggedIn && authStore.user">
+          <RouterLink v-if="authStore.user.role === 'admin'" class="admin-link" to="/admin">管理后台</RouterLink>
           <RouterLink class="profile-link" to="/profile" :aria-label="`${authStore.user.username} 的个人资料`">
             <img
               class="user-avatar"
@@ -95,10 +96,12 @@ watch(
         <RouterLink :to="{ path: '/', hash: '#characters' }" @click="closeMenu">角色档案</RouterLink>
         <RouterLink to="/memes" @click="closeMenu">表情包档案</RouterLink>
         <RouterLink to="/music" @click="closeMenu">哈基米音乐</RouterLink>
+        <RouterLink to="/search" @click="closeMenu">搜索</RouterLink>
         <RouterLink to="/submit" @click="closeMenu">投稿</RouterLink>
 
         <div class="mobile-account">
           <template v-if="authStore.isLoggedIn && authStore.user">
+            <RouterLink v-if="authStore.user.role === 'admin'" to="/admin" @click="closeMenu">⚙ 管理后台</RouterLink>
             <RouterLink to="/profile" @click="closeMenu">
               <img :src="authStore.user.avatar_url || defaultAvatar" :alt="authStore.user.username" />
               <span>
@@ -244,6 +247,7 @@ watch(
 }
 
 .submit-link,
+.admin-link,
 .login-link,
 .register-link,
 .logout-button {

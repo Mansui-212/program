@@ -22,6 +22,7 @@ class MusicTrackRead(BaseModel):
     cover_url: str | None = None
     duration_seconds: int | None = None
     character_id: int | None = None
+    character_ids: list[int] = []
     original_title: str | None = None
     source_name: str | None = None
     source_url: str | None = None

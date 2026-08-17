@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy import or_, select
+from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
+from app.models.associations import meme_characters, music_track_characters
 from app.models.character import Character
 from app.models.meme import Meme
 from app.models.music_track import MusicTrack
@@ -44,7 +45,15 @@ def list_character_memes(
 
     statement = (
         select(Meme)
-        .where(Meme.character_id == character_id)
+        .outerjoin(meme_characters, Meme.id == meme_characters.c.meme_id)
+        .options(selectinload(Meme.characters))
+        .where(
+            or_(
+                Meme.character_id == character_id,
+                meme_characters.c.character_id == character_id,
+            )
+        )
+        .distinct()
         .order_by(Meme.sort_order.asc(), Meme.id.desc())
     )
 
@@ -64,7 +73,18 @@ def list_character_music_tracks(
 
     statement = (
         select(MusicTrack)
-        .where(MusicTrack.character_id == character_id)
+        .outerjoin(
+            music_track_characters,
+            MusicTrack.id == music_track_characters.c.music_track_id,
+        )
+        .options(selectinload(MusicTrack.characters))
+        .where(
+            or_(
+                MusicTrack.character_id == character_id,
+                music_track_characters.c.character_id == character_id,
+            )
+        )
+        .distinct()
         .order_by(MusicTrack.sort_order.asc(), MusicTrack.id.desc())
     )
 

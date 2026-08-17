@@ -1,9 +1,10 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.associations import submission_characters
 
 
 class Submission(Base):
@@ -45,6 +46,18 @@ class Submission(Base):
 
     file_url: Mapped[str] = mapped_column(
         String(255),
+        nullable=False,
+    )
+
+    content_id: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
+
+    content_deleted: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
         nullable=False,
     )
 
@@ -112,3 +125,13 @@ class Submission(Base):
     )
 
     character = relationship("Character")
+
+    characters: Mapped[list["Character"]] = relationship(
+        "Character",
+        secondary=submission_characters,
+        back_populates="submissions",
+    )
+
+    @property
+    def character_ids(self) -> list[int]:
+        return [character.id for character in self.characters]

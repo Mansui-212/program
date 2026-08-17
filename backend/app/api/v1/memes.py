@@ -1,10 +1,11 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
+from app.models.associations import meme_characters
 from app.models.character import Character
 from app.models.meme import Meme
 from app.schemas.meme import MemeDetailRead, MemeRead
@@ -22,12 +23,25 @@ def list_memes(
     keyword: str | None = Query(default=None),
     order: Literal["latest", "featured", "popular"] = Query(default="latest"),
 ):
-    statement = select(Meme)
+    statement = select(Meme).options(selectinload(Meme.characters))
 
     if character_slug:
+        character_id = db.scalar(
+            select(Character.id).where(Character.slug == character_slug)
+        )
+
+        if character_id is None:
+            return []
+
         statement = (
-            statement.join(Character, Meme.character_id == Character.id)
-            .where(Character.slug == character_slug)
+            statement.outerjoin(meme_characters, Meme.id == meme_characters.c.meme_id)
+            .where(
+                or_(
+                    Meme.character_id == character_id,
+                    meme_characters.c.character_id == character_id,
+                )
+            )
+            .distinct()
         )
 
     if keyword:
@@ -53,6 +67,7 @@ def list_latest_memes(
 ):
     statement = (
         select(Meme)
+        .options(selectinload(Meme.characters))
         .order_by(Meme.created_at.desc(), Meme.id.desc())
         .limit(limit)
     )
@@ -67,6 +82,7 @@ def list_featured_memes(
 ):
     statement = (
         select(Meme)
+        .options(selectinload(Meme.characters))
         .where(Meme.is_featured.is_(True))
         .order_by(Meme.sort_order.asc(), Meme.id.desc())
         .limit(limit)
@@ -82,7 +98,7 @@ def get_meme_detail(
 ):
     statement = (
         select(Meme)
-        .options(selectinload(Meme.character))
+        .options(selectinload(Meme.character), selectinload(Meme.characters))
         .where(Meme.slug == slug)
     )
 

@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, fun
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.associations import meme_characters
 
 
 class Meme(Base):
@@ -104,3 +105,13 @@ class Meme(Base):
         "Character",
         back_populates="memes",
     )
+
+    characters: Mapped[list["Character"]] = relationship(
+        "Character",
+        secondary=meme_characters,
+        back_populates="related_memes",
+    )
+
+    @property
+    def character_ids(self) -> list[int]:
+        return [character.id for character in self.characters]

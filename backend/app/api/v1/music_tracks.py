@@ -1,10 +1,11 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.db.session import get_db
+from app.models.associations import music_track_characters
 from app.models.character import Character
 from app.models.music_track import MusicTrack
 from app.schemas.music_track import MusicTrackDetailRead, MusicTrackRead
@@ -22,12 +23,28 @@ def list_music_tracks(
     keyword: str | None = Query(default=None),
     order: Literal["latest", "featured", "popular"] = Query(default="latest"),
 ):
-    statement = select(MusicTrack)
+    statement = select(MusicTrack).options(selectinload(MusicTrack.characters))
 
     if character_slug:
+        character_id = db.scalar(
+            select(Character.id).where(Character.slug == character_slug)
+        )
+
+        if character_id is None:
+            return []
+
         statement = (
-            statement.join(Character, MusicTrack.character_id == Character.id)
-            .where(Character.slug == character_slug)
+            statement.outerjoin(
+                music_track_characters,
+                MusicTrack.id == music_track_characters.c.music_track_id,
+            )
+            .where(
+                or_(
+                    MusicTrack.character_id == character_id,
+                    music_track_characters.c.character_id == character_id,
+                )
+            )
+            .distinct()
         )
 
     if keyword:
@@ -53,6 +70,7 @@ def list_latest_music_tracks(
 ):
     statement = (
         select(MusicTrack)
+        .options(selectinload(MusicTrack.characters))
         .order_by(MusicTrack.created_at.desc(), MusicTrack.id.desc())
         .limit(limit)
     )
@@ -67,6 +85,7 @@ def list_featured_music_tracks(
 ):
     statement = (
         select(MusicTrack)
+        .options(selectinload(MusicTrack.characters))
         .where(MusicTrack.is_featured.is_(True))
         .order_by(MusicTrack.sort_order.asc(), MusicTrack.id.desc())
         .limit(limit)
@@ -82,7 +101,7 @@ def get_music_track_detail(
 ):
     statement = (
         select(MusicTrack)
-        .options(selectinload(MusicTrack.character))
+        .options(selectinload(MusicTrack.character), selectinload(MusicTrack.characters))
         .where(MusicTrack.slug == slug)
     )
 

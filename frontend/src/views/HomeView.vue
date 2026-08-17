@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+import SearchBox from '@/components/search/SearchBox.vue'
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getLatestMemes } from '@/api/modules/memes'
 import { getFeaturedMusicTracks } from '@/api/modules/musicTracks'
@@ -17,6 +19,22 @@ const memesError = ref(false)
 const featuredMusicTracks = ref<MusicTrack[]>([])
 const musicLoading = ref(true)
 const musicError = ref(false)
+const homeSearchKeyword = ref('')
+const router = useRouter()
+
+async function submitHomeSearch() {
+  const keyword = homeSearchKeyword.value.trim()
+
+  await router.push({
+    name: 'search',
+    query: keyword ? { q: keyword } : undefined,
+  })
+}
+
+function searchPopular(keyword: string) {
+  homeSearchKeyword.value = keyword
+  void submitHomeSearch()
+}
 
 async function loadCharacters() {
   try {
@@ -71,6 +89,16 @@ onMounted(() => {
           <p class="hero-description">
             给每个令人会心一笑的瞬间，留一盏温柔又明亮的小灯。
           </p>
+          <div class="hero-search">
+            <SearchBox v-model="homeSearchKeyword" @search="submitHomeSearch" />
+            <div class="hero-popular-searches">
+              <span>热门：</span>
+              <button type="button" @click="searchPopular('耄耋')">耄耋</button>
+              <button type="button" @click="searchPopular('鼠鼠')">鼠鼠</button>
+              <button type="button" @click="searchPopular('doro')">doro</button>
+              <button type="button" @click="searchPopular('曼波')">曼波</button>
+            </div>
+          </div>
           <div class="hero-actions">
             <a class="button button-primary" href="#characters">探索角色 <span>→</span></a>
             <button class="button button-secondary" type="button">随机来一张 <span>↗</span></button>
@@ -436,6 +464,41 @@ onMounted(() => {
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 30px;
+}
+
+.hero-search {
+  max-width: 490px;
+  margin-top: 22px;
+}
+
+.hero-search :deep(.search-box) {
+  box-shadow: 0 12px 26px rgba(76, 58, 29, 0.08);
+}
+
+.hero-popular-searches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  color: #8d816f;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.hero-popular-searches button {
+  padding: 4px 8px;
+  border: 1px solid rgba(215, 169, 79, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.66);
+  color: #66583e;
+  font: inherit;
+  cursor: pointer;
+}
+
+.hero-popular-searches button:hover {
+  border-color: #f6c83f;
+  background: #fff0b8;
 }
 
 .button {

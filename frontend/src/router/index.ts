@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import MemesView from '../views/MemesView.vue'
 import MusicView from '@/views/MusicView.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -35,6 +36,11 @@ const router = createRouter({
       component: () => import('@/views/CharacterDetail.vue'),
     },
     {
+      path: '/search',
+      name: 'search',
+      component: () => import('@/views/SearchView.vue'),
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),
@@ -54,7 +60,39 @@ const router = createRouter({
       name: 'submit',
       component: () => import('@/views/SubmitView.vue'),
     },
+    {
+      path: '/admin',
+      name: 'admin-home',
+      component: () => import('@/views/admin/AdminHome.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/submissions',
+      name: 'admin-submissions',
+      component: () => import('@/views/admin/AdminSubmissions.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/users',
+      name: 'admin-users',
+      component: () => import('@/views/admin/AdminUsers.vue'),
+      meta: { requiresAdmin: true },
+    },
   ],
+})
+
+router.beforeEach(async (to) => {
+  if (!to.meta.requiresAdmin) return true
+
+  const authStore = useAuthStore()
+
+  if (authStore.token && !authStore.user) {
+    await authStore.fetchMe()
+  }
+
+  if (authStore.user?.role === 'admin') return true
+
+  return { name: 'home' }
 })
 
 export default router

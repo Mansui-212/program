@@ -6,7 +6,7 @@ export interface CreateSubmissionPayload {
   submission_type: 'meme' | 'music'
   title: string
   description?: string
-  character_id?: number | null
+  character_ids?: number[]
   source_name?: string
   source_url?: string
   author_name?: string
@@ -23,8 +23,8 @@ export function createSubmission(payload: CreateSubmissionPayload) {
     formData.append('description', payload.description)
   }
 
-  if (payload.character_id !== null && payload.character_id !== undefined) {
-    formData.append('character_id', String(payload.character_id))
+  for (const characterId of payload.character_ids || []) {
+    formData.append('character_ids', String(characterId))
   }
 
   if (payload.source_name) {

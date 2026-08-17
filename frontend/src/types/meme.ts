@@ -6,6 +6,7 @@ export interface Meme {
   image_url: string
   file_type: string
   character_id: number | null
+  character_ids: number[]
   source_name: string | null
   source_url: string | null
   author_name: string | null

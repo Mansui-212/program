@@ -7,6 +7,7 @@ export interface MusicTrack {
   cover_url: string | null
   duration_seconds: number | null
   character_id: number | null
+  character_ids: number[]
   original_title: string | null
   source_name: string | null
   source_url: string | null

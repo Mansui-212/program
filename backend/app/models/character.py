@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, DateTime, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.associations import meme_characters, music_track_characters, submission_characters
 
 
 class Character(Base):
@@ -95,4 +96,22 @@ class Character(Base):
     music_tracks: Mapped[list["MusicTrack"]] = relationship(
         "MusicTrack",
         back_populates="character",
+    )
+
+    related_memes: Mapped[list["Meme"]] = relationship(
+        "Meme",
+        secondary=meme_characters,
+        back_populates="characters",
+    )
+
+    related_music_tracks: Mapped[list["MusicTrack"]] = relationship(
+        "MusicTrack",
+        secondary=music_track_characters,
+        back_populates="characters",
+    )
+
+    submissions: Mapped[list["Submission"]] = relationship(
+        "Submission",
+        secondary=submission_characters,
+        back_populates="characters",
     )

@@ -1,0 +1,29 @@
+import type { Submission } from '@/types/submission'
+
+export interface AdminUser {
+  id: number
+  username: string
+  avatar_url: string | null
+  haki_value: number
+  role: string
+  created_at: string
+}
+
+export interface AdminSubmission extends Submission {
+  user: AdminUser
+}
+
+export interface HakiRecord {
+  id: number
+  user_id: number
+  change_value: number
+  reason: string
+  created_at: string
+}
+
+export interface AdminOverview {
+  total_uploads: number
+  published_contents: number
+  user_count: number
+  total_haki_value: number
+}

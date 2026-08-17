@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getMemes } from '@/api/modules/memes'
@@ -11,12 +11,13 @@ import type { Meme } from '@/types/meme'
 
 const characters = ref<Character[]>([])
 const memes = ref<Meme[]>([])
+const route = useRoute()
 const router = useRouter()
 
 const loading = ref(true)
 const selectedCharacterSlug = ref('')
 const selectedOrder = ref<'latest' | 'featured' | 'popular'>('latest')
-const keyword = ref('')
+const keyword = ref(typeof route.query.keyword === 'string' ? route.query.keyword : '')
 const selectedMeme = ref<Meme | null>(null)
 
 async function loadCharacters() {

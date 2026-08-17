@@ -6,8 +6,11 @@ export interface Submission {
   title: string
   description: string | null
   file_url: string
+  content_id: number | null
+  content_deleted: boolean
   cover_url: string | null
   character_id: number | null
+  character_ids: number[]
   source_name: string | null
   source_url: string | null
   author_name: string | null

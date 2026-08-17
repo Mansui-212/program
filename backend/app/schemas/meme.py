@@ -21,6 +21,7 @@ class MemeRead(BaseModel):
     image_url: str
     file_type: str
     character_id: int | None = None
+    character_ids: list[int] = []
     source_name: str | None = None
     source_url: str | None = None
     author_name: str | None = None

@@ -17,7 +17,7 @@ const mySubmissions = ref<Submission[]>([])
 const submissionType = ref<'meme' | 'music'>('meme')
 const title = ref('')
 const description = ref('')
-const characterId = ref<number | null>(null)
+const characterIds = ref<number[]>([])
 const sourceName = ref('')
 const sourceUrl = ref('')
 const authorName = ref('')
@@ -51,14 +51,8 @@ function getErrorMessage(reason: unknown, fallback: string) {
   return fallback
 }
 
-function getStatusLabel(status: Submission['status']) {
-  const labels: Record<Submission['status'], string> = {
-    pending: '待审核',
-    approved: '已通过',
-    rejected: '已驳回',
-  }
-
-  return labels[status]
+function getPublishLabel(submission: Submission) {
+  return submission.content_deleted ? '已下架' : '已发布'
 }
 
 async function loadCharacters() {
@@ -136,23 +130,24 @@ async function submitForm() {
       submission_type: submissionType.value,
       title: cleanedTitle,
       description: description.value,
-      character_id: characterId.value,
+      character_ids: characterIds.value,
       source_name: sourceName.value,
       source_url: sourceUrl.value,
       author_name: authorName.value,
       file: selectedFile.value,
     })
 
-    success.value = '投稿成功，正在等待审核'
+    success.value = '发布成功，已进入内容库并获得 10 哈气值'
     title.value = ''
     description.value = ''
-    characterId.value = null
+    characterIds.value = []
     sourceName.value = ''
     sourceUrl.value = ''
     authorName.value = ''
     selectedFile.value = null
     fileInputKey.value += 1
 
+    await authStore.fetchMe()
     await loadMySubmissions()
   } catch (reason: unknown) {
     error.value = getErrorMessage(reason, '投稿失败')
@@ -189,7 +184,7 @@ onMounted(() => {
     <section class="submit-hero">
       <p class="section-kicker">SUBMIT</p>
       <h1>投稿到基米小站</h1>
-      <p>上传你的哈基米表情包或音乐，审核通过后将进入小站档案，并增加哈气值。</p>
+      <p>上传你的哈基米表情包或音乐，发布后会立即进入小站档案，并获得 10 哈气值。</p>
     </section>
 
     <section v-if="!authStore.isLoggedIn" class="submit-card">
@@ -201,7 +196,7 @@ onMounted(() => {
 
     <section v-else class="submit-layout">
       <form class="submit-card" @submit.prevent="submitForm">
-        <h2>新投稿</h2>
+        <h2>发布内容</h2>
 
         <label>
           投稿类型
@@ -213,18 +208,19 @@ onMounted(() => {
 
         <label>
           标题
-          <input v-model="title" type="text" maxlength="160" required />
+          <input v-model="title" type="text" :maxlength="submissionType === 'meme' ? 120 : 160" required />
         </label>
 
-        <label>
-          关联角色
-          <select v-model="characterId">
-            <option :value="null">未分类</option>
-            <option v-for="character in characters" :key="character.id" :value="character.id">
-              {{ character.name }}
-            </option>
-          </select>
-        </label>
+        <fieldset class="character-selector">
+          <legend>关联角色 <span>可多选</span></legend>
+          <p>选择这份内容所属或相关的角色；不选也可以直接发布。</p>
+          <div class="character-options">
+            <label v-for="character in characters" :key="character.id" class="character-option">
+              <input v-model="characterIds" type="checkbox" :value="character.id" />
+              <span>{{ character.name }}</span>
+            </label>
+          </div>
+        </fieldset>
 
         <label>
           简介
@@ -263,12 +259,12 @@ onMounted(() => {
         <p v-if="success" class="success-text">{{ success }}</p>
 
         <button type="submit" :disabled="loading">
-          {{ loading ? '投稿中...' : '提交审核' }}
+          {{ loading ? '发布中...' : '立即发布' }}
         </button>
       </form>
 
       <section class="submit-card">
-        <h2>我的投稿</h2>
+        <h2>我的发布</h2>
 
         <p v-if="mySubmissions.length === 0" class="empty-text">暂无投稿。</p>
 
@@ -278,11 +274,11 @@ onMounted(() => {
               <h3>{{ submission.title }}</h3>
               <p>
                 {{ submission.submission_type === 'meme' ? '表情包' : '音乐' }}
-                · {{ getStatusLabel(submission.status) }}
+                · {{ getPublishLabel(submission) }}
               </p>
             </div>
 
-            <a :href="submission.file_url" target="_blank" rel="noreferrer">查看文件</a>
+            <a :href="submission.file_url" target="_blank" rel="noreferrer">查看内容</a>
           </article>
         </div>
       </section>
@@ -360,6 +356,63 @@ label {
   gap: 8px;
   color: #594828;
   font-weight: 800;
+}
+
+.character-selector {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.character-selector legend {
+  color: #594828;
+  font-weight: 800;
+}
+
+.character-selector legend span {
+  margin-left: 6px;
+  color: #a58a55;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.character-selector > p {
+  margin: 8px 0 12px;
+  color: #8a7655;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.character-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.character-option {
+  display: inline-flex;
+  grid-template-columns: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #eadfca;
+  border-radius: 999px;
+  background: #fffdf7;
+  color: #725c33;
+  cursor: pointer;
+}
+
+.character-option:has(input:checked) {
+  border-color: #f6c534;
+  background: #fff0b8;
+  color: #594828;
+}
+
+.character-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: #d6a818;
 }
 
 input,

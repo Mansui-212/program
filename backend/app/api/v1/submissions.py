@@ -3,12 +3,15 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.v1.auth import get_current_user
 from app.api.v1.users import is_valid_image_content
 from app.db.session import get_db
 from app.models.character import Character
+from app.models.haki_record import HakiRecord
+from app.models.meme import Meme
+from app.models.music_track import MusicTrack
 from app.models.submission import Submission
 from app.models.user import User
 from app.schemas.submission import SubmissionRead
@@ -38,6 +41,7 @@ ALLOWED_SUBMISSION_STATUSES = {"pending", "approved", "rejected"}
 
 MAX_MEME_SIZE = 10 * 1024 * 1024
 MAX_MUSIC_SIZE = 30 * 1024 * 1024
+PUBLISH_HAKI_VALUE = 10
 
 
 def is_valid_mp3_content(content: bytes) -> bool:
@@ -72,6 +76,7 @@ async def create_submission(
     title: str = Form(...),
     description: str | None = Form(default=None),
     character_id: int | None = Form(default=None),
+    character_ids: list[int] = Form(default=[]),
     source_name: str | None = Form(default=None),
     source_url: str | None = Form(default=None),
     author_name: str | None = Form(default=None),
@@ -93,11 +98,34 @@ async def create_submission(
             detail="投稿标题长度应为 1 到 160 个字符",
         )
 
-    if character_id is not None and db.get(Character, character_id) is None:
+    if submission_type == "meme" and len(cleaned_title) > 120:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="关联角色不存在",
+            detail="表情包标题不能超过 120 个字符",
         )
+
+    selected_character_ids = list(dict.fromkeys([
+        *character_ids,
+        *([character_id] if character_id is not None else []),
+    ]))
+
+    selected_characters: list[Character] = []
+
+    if selected_character_ids:
+        loaded_characters = db.scalars(
+            select(Character).where(Character.id.in_(selected_character_ids))
+        ).all()
+        characters_by_id = {character.id: character for character in loaded_characters}
+
+        if len(characters_by_id) != len(selected_character_ids):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="关联角色不存在",
+            )
+
+        selected_characters = [characters_by_id[character_id] for character_id in selected_character_ids]
+
+    primary_character_id = selected_character_ids[0] if selected_character_ids else None
 
     content_type = file.content_type
 
@@ -150,17 +178,60 @@ async def create_submission(
     submission = Submission(
         user_id=current_user.id,
         submission_type=submission_type,
-        status="pending",
+        status="approved",
         title=cleaned_title,
         description=clean_optional(description),
         file_url=file_url,
-        character_id=character_id,
+        character_id=primary_character_id,
         source_name=clean_optional(source_name),
         source_url=clean_optional(source_url),
         author_name=clean_optional(author_name) or current_user.username,
     )
+    submission.characters = selected_characters
 
     db.add(submission)
+    db.flush()
+
+    if submission_type == "meme":
+        published_content = Meme(
+            slug=f"submission-meme-{submission.id}",
+            title=cleaned_title,
+            description=clean_optional(description),
+            image_url=file_url,
+            file_type="gif" if content_type == "image/gif" else "image",
+            character_id=primary_character_id,
+            source_name=clean_optional(source_name) or "用户投稿",
+            source_url=clean_optional(source_url),
+            author_name=clean_optional(author_name) or current_user.username,
+            is_featured=False,
+        )
+    else:
+        published_content = MusicTrack(
+            slug=f"submission-music-{submission.id}",
+            title=cleaned_title,
+            description=clean_optional(description),
+            audio_url=file_url,
+            character_id=primary_character_id,
+            source_name=clean_optional(source_name) or "用户投稿",
+            source_url=clean_optional(source_url),
+            author_name=clean_optional(author_name) or current_user.username,
+            is_featured=False,
+        )
+
+    published_content.characters = selected_characters
+    db.add(published_content)
+    db.flush()
+
+    submission.content_id = published_content.id
+    current_user.haki_value += PUBLISH_HAKI_VALUE
+    db.add(
+        HakiRecord(
+            user_id=current_user.id,
+            change_value=PUBLISH_HAKI_VALUE,
+            reason=f"作品发布：{cleaned_title}",
+        )
+    )
+
     db.commit()
     db.refresh(submission)
 
@@ -181,6 +252,7 @@ def list_my_submissions(
 
     statement = (
         select(Submission)
+        .options(selectinload(Submission.characters))
         .where(Submission.user_id == current_user.id)
         .order_by(Submission.created_at.desc(), Submission.id.desc())
     )

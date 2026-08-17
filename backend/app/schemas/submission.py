@@ -11,8 +11,11 @@ class SubmissionRead(BaseModel):
     title: str
     description: str | None = None
     file_url: str
+    content_id: int | None = None
+    content_deleted: bool
     cover_url: str | None = None
     character_id: int | None = None
+    character_ids: list[int] = []
     source_name: str | None = None
     source_url: str | None = None
     author_name: str | None = None

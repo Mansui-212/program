@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 
 import TurntablePlayer from '@/components/TurntablePlayer.vue'
 import { getFeaturedCharacters } from '@/api/modules/characters'
@@ -10,6 +11,7 @@ import type { MusicTrack } from '@/types/musicTrack'
 
 const characters = ref<Character[]>([])
 const tracks = ref<MusicTrack[]>([])
+const route = useRoute()
 const loading = ref(true)
 
 const selectedCharacterSlug = ref('')
@@ -42,7 +44,8 @@ async function loadTracks() {
     )
 
     if ((!currentTrack.value || !currentTrackIsVisible) && tracks.value.length > 0) {
-      currentTrack.value = tracks.value[0] || null
+      const requestedSlug = typeof route.query.track === 'string' ? route.query.track : ''
+      currentTrack.value = tracks.value.find((track) => track.slug === requestedSlug) || tracks.value[0] || null
       isPlaying.value = false
     }
 

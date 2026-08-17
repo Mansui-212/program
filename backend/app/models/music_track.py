@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, String, Text, fun
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+from app.models.associations import music_track_characters
 
 
 class MusicTrack(Base):
@@ -107,3 +108,13 @@ class MusicTrack(Base):
         "Character",
         back_populates="music_tracks",
     )
+
+    characters: Mapped[list["Character"]] = relationship(
+        "Character",
+        secondary=music_track_characters,
+        back_populates="related_music_tracks",
+    )
+
+    @property
+    def character_ids(self) -> list[int]:
+        return [character.id for character in self.characters]
