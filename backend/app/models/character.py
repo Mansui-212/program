@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Integer, JSON, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -39,6 +39,21 @@ class Character(Base):
 
     avatar_url: Mapped[str | None] = mapped_column(
         String(255),
+        nullable=True,
+    )
+
+    avatar_large_url: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+
+    origin_story: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    timeline: Mapped[list[dict[str, str]] | None] = mapped_column(
+        JSON,
         nullable=True,
     )
 

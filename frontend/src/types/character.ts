@@ -11,3 +11,15 @@ export interface Character {
   created_at: string
   updated_at: string
 }
+
+export interface CharacterTimelineEvent {
+  date: string
+  title: string
+  content: string
+}
+
+export interface CharacterDetail extends Character {
+  avatar_large_url: string | null
+  origin_story: string | null
+  timeline: CharacterTimelineEvent[] | null
+}

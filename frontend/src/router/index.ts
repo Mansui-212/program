@@ -30,6 +30,11 @@ const router = createRouter({
       component: MusicView,
     },
     {
+      path: '/character/:slug',
+      name: 'character-detail',
+      component: () => import('@/views/CharacterDetail.vue'),
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),

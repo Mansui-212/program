@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getMemes } from '@/api/modules/memes'
@@ -10,6 +11,7 @@ import type { Meme } from '@/types/meme'
 
 const characters = ref<Character[]>([])
 const memes = ref<Meme[]>([])
+const router = useRouter()
 
 const loading = ref(true)
 const selectedCharacterSlug = ref('')
@@ -52,7 +54,26 @@ function changeOrder(order: 'latest' | 'featured' | 'popular') {
 }
 
 function searchMemes() {
-  loadMemes()
+  const searchTerm = keyword.value.trim().toLocaleLowerCase()
+  const matchedCharacter = characters.value.find((character) => {
+    const names = [
+      character.name,
+      character.slug,
+      ...(character.aliases?.split(',') || []),
+    ]
+
+    return names.some((name) => name.trim().toLocaleLowerCase() === searchTerm)
+  })
+
+  if (matchedCharacter) {
+    void router.push({
+      name: 'character-detail',
+      params: { slug: matchedCharacter.slug },
+    })
+    return
+  }
+
+  void loadMemes()
 }
 
 function openMeme(meme: Meme) {
@@ -78,7 +99,7 @@ onMounted(async () => {
     </section>
 
     <section class="memes-toolbar">
-      <div class="search-box">
+      <div id="search" class="search-box">
         <input
           v-model="keyword"
           type="text"
