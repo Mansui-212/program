@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 
 import { uploadMyAvatar } from '@/api/modules/users'
 import { useAuthStore } from '@/stores/auth'
+import { formatUid } from '@/utils/formatUid'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -82,7 +83,7 @@ function goLogin() {
           <p class="section-kicker">USER PROFILE</p>
           <h1>{{ authStore.user.username }}</h1>
           <p class="user-meta">
-            UID {{ authStore.user.id }} · 哈气值 {{ authStore.user.haki_value }}
+            UID {{ formatUid(authStore.user.id) }} · 哈气值 {{ authStore.user.haki_value }}
           </p>
         </div>
       </div>

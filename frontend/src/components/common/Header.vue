@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 
 import stationLogo from '../../../../logo.jpg'
 import { useAuthStore } from '@/stores/auth'
+import { formatUid } from '@/utils/formatUid'
 
 defineOptions({
   name: 'SiteHeader',
@@ -63,7 +64,7 @@ watch(
             />
             <span>
               <strong>{{ authStore.user.username }}</strong>
-              <small>UID {{ authStore.user.id }} · 哈气值 {{ authStore.user.haki_value }}</small>
+              <small>UID {{ formatUid(authStore.user.id) }} · 哈气值 {{ authStore.user.haki_value }}</small>
             </span>
           </RouterLink>
           <button type="button" class="logout-button" @click="logout">退出</button>
@@ -106,7 +107,7 @@ watch(
               <img :src="authStore.user.avatar_url || defaultAvatar" :alt="authStore.user.username" />
               <span>
                 <strong>{{ authStore.user.username }}</strong>
-                <small>UID {{ authStore.user.id }} · 哈气值 {{ authStore.user.haki_value }}</small>
+                <small>UID {{ formatUid(authStore.user.id) }} · 哈气值 {{ authStore.user.haki_value }}</small>
               </span>
             </RouterLink>
             <button type="button" @click="logout">退出登录</button>

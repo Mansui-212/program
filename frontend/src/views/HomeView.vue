@@ -214,7 +214,9 @@ onMounted(() => {
             <p class="eyebrow">HAKIMI CHRONICLE</p>
             <h2>编年史</h2>
             <p>把流传过的梗、声音和画面，串成一条正在延伸的文化时间线。</p>
-            <a class="button button-dark" href="#chronicle">进入时间线 <span>→</span></a>
+            <RouterLink class="button button-dark timeline-button" to="/chronicle">
+              进入时间线 <span>→</span>
+            </RouterLink>
           </div>
           <div class="timeline" aria-hidden="true">
             <span class="timeline-line"></span>

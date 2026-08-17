@@ -9,6 +9,7 @@ import {
 } from '@/api/modules/admin'
 
 import type { AdminSubmission } from '@/types/admin'
+import { formatUid } from '@/utils/formatUid'
 
 const submissions = ref<AdminSubmission[]>([])
 const selectedType = ref<'all' | 'meme' | 'music'>('all')
@@ -129,7 +130,7 @@ onMounted(() => {
           <h2>{{ submission.title }}</h2>
           <p>{{ submission.description || '发布者没有留下简介。' }}</p>
           <div class="submission-meta">
-            <span>投稿人：{{ submission.user.username }} · UID {{ submission.user.id }}</span>
+            <span>投稿人：{{ submission.user.username }} · UID {{ formatUid(submission.user.id) }}</span>
             <span>哈气值 {{ submission.user.haki_value }}</span>
           </div>
 

@@ -10,6 +10,7 @@ import {
 import { useAuthStore } from '@/stores/auth'
 
 import type { AdminUser, HakiRecord } from '@/types/admin'
+import { formatUid } from '@/utils/formatUid'
 
 const authStore = useAuthStore()
 const users = ref<AdminUser[]>([])
@@ -141,7 +142,7 @@ onMounted(() => {
               <h2>{{ user.username }}</h2>
               <span :class="{ admin: user.role === 'admin' }">{{ user.role === 'admin' ? '管理员' : '用户' }}</span>
             </div>
-            <p>UID {{ user.id }} · 当前哈气值 <strong>{{ user.haki_value }}</strong></p>
+            <p>UID {{ formatUid(user.id) }} · 当前哈气值 <strong>{{ user.haki_value }}</strong></p>
           </div>
         </div>
 
