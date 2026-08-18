@@ -74,6 +74,3 @@ storage/uploads/submissions/*
 !storage/uploads/submissions/covers/
 !storage/uploads/submissions/covers/.gitkeep
 
-
-#images
-*.jpg
