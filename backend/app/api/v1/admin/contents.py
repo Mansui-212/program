@@ -79,7 +79,7 @@ def delete_content(
     )
     db.delete(content)
     db.commit()
-    delete_submission_file(file_url)
+
 
 
 @router.delete("/memes/{content_id}", status_code=status.HTTP_204_NO_CONTENT)

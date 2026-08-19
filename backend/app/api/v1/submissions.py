@@ -1,3 +1,4 @@
+
 from pathlib import Path
 from uuid import uuid4
 
@@ -37,7 +38,7 @@ ALLOWED_MUSIC_TYPES = {
 }
 
 ALLOWED_SUBMISSION_TYPES = {"meme", "music"}
-ALLOWED_SUBMISSION_STATUSES = {"pending", "approved", "rejected"}
+ALLOWED_SUBMISSION_STATUSES = {"pending", "approved", "rejected", "deleted"}
 
 MAX_MEME_SIZE = 10 * 1024 * 1024
 MAX_MUSIC_SIZE = 30 * 1024 * 1024
@@ -244,20 +245,38 @@ def list_my_submissions(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+
     if status_filter and status_filter not in ALLOWED_SUBMISSION_STATUSES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="投稿状态无效",
         )
 
+
     statement = (
         select(Submission)
-        .options(selectinload(Submission.characters))
-        .where(Submission.user_id == current_user.id)
-        .order_by(Submission.created_at.desc(), Submission.id.desc())
+        .options(
+            selectinload(Submission.characters)
+        )
+        .where(
+            Submission.user_id == current_user.id,
+            Submission.content_deleted == False,    
+        )
+        .order_by(
+            Submission.created_at.desc(),
+            Submission.id.desc()
+        )
     )
 
-    if status_filter:
-        statement = statement.where(Submission.status == status_filter)
 
-    return db.scalars(statement).all()
+    if status_filter:
+
+        statement = statement.where(
+            Submission.status == status_filter
+        )
+
+
+    submissions = db.scalars(statement).all()
+
+
+    return submissions
