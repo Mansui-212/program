@@ -4,6 +4,12 @@ import type { Character, CharacterDetail } from '@/types/character'
 import type { Meme } from '@/types/meme'
 import type { MusicTrack } from '@/types/musicTrack'
 
+
+export function getCharacters() {
+  return http.get<Character[]>('/v1/characters')
+}
+
+
 export function getFeaturedCharacters() {
   return http.get<Character[]>('/v1/characters/featured')
 }

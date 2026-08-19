@@ -7,6 +7,11 @@ import { useAuthStore } from '@/stores/auth'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+{
+  path: '/characters',
+  name: 'characters',
+  component: () => import('@/views/CharactersView.vue'),
+},
     {
       path: '/',
       name: 'home',

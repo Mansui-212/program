@@ -124,7 +124,12 @@ onMounted(() => {
             <p class="eyebrow">CHARACTER ARCHIVE</p>
             <h2>首批角色</h2>
           </div>
-          <a class="section-link" href="#characters">查看全部角色 <span>→</span></a>
+         <RouterLink
+  class="section-link"
+  to="/characters"
+>
+  查看全部角色 <span>→</span>
+</RouterLink>
         </div>
 
         <div class="character-grid">

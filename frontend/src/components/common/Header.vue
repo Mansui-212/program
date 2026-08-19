@@ -45,7 +45,7 @@ watch(
 
       <nav class="desktop-nav" aria-label="主导航">
         <RouterLink to="/">首页</RouterLink>
-        <RouterLink :to="{ path: '/', hash: '#characters' }">角色档案</RouterLink>
+        <RouterLink to="/characters">角色档案</RouterLink>
         <RouterLink to="/memes">表情包</RouterLink>
         <RouterLink to="/music">音乐</RouterLink>
         <RouterLink to="/search">搜索</RouterLink>
@@ -94,7 +94,7 @@ watch(
     <Transition name="mobile-menu">
       <nav v-if="mobileMenuOpen" id="mobile-navigation" class="mobile-nav" aria-label="移动端主导航">
         <RouterLink to="/" @click="closeMenu">首页</RouterLink>
-        <RouterLink :to="{ path: '/', hash: '#characters' }" @click="closeMenu">角色档案</RouterLink>
+        <RouterLink to="/characters" @click="closeMenu">角色档案</RouterLink>
         <RouterLink to="/memes" @click="closeMenu">表情包档案</RouterLink>
         <RouterLink to="/music" @click="closeMenu">哈基米音乐</RouterLink>
         <RouterLink to="/search" @click="closeMenu">搜索</RouterLink>
