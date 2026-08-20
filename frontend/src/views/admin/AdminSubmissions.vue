@@ -113,10 +113,16 @@ onMounted(() => {
       <article v-for="submission in submissions" :key="submission.id" class="submission-card">
         <div class="preview-box">
           <img
-            v-if="submission.submission_type === 'meme'"
+            v-if="submission.submission_type === 'meme' && !submission.content_deleted"
             :src="submission.file_url"
             :alt="submission.title"
           />
+          <div
+            v-else-if="submission.submission_type === 'meme'"
+            class="removed-preview"
+          >
+            已下架
+          </div>
           <div v-else class="music-preview">♪</div>
         </div>
 
@@ -138,7 +144,7 @@ onMounted(() => {
           </div>
 
           <audio
-            v-if="submission.submission_type === 'music'"
+            v-if="submission.submission_type === 'music' && !submission.content_deleted"
             class="preview-audio"
             :src="submission.file_url"
             controls
@@ -146,7 +152,15 @@ onMounted(() => {
           />
 
           <div class="card-actions">
-            <a :href="submission.file_url" target="_blank" rel="noreferrer">查看原文件</a>
+            <a
+              v-if="!submission.content_deleted"
+              :href="submission.file_url"
+              target="_blank"
+              rel="noreferrer"
+            >
+              查看原文件
+            </a>
+            <span v-else class="removed-file-note">原文件已移除</span>
             <button
               v-if="submission.content_id && !submission.content_deleted"
               type="button"
@@ -299,6 +313,24 @@ onMounted(() => {
   font-size: 48px;
 }
 
+.removed-preview {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  place-items: center;
+  background: repeating-linear-gradient(
+    -45deg,
+    #f6eee1,
+    #f6eee1 12px,
+    #eee0cc 12px,
+    #eee0cc 24px
+  );
+  color: #9d8656;
+  font-size: 16px;
+  font-weight: 900;
+}
+
 .submission-copy {
   padding: 26px;
 }
@@ -374,6 +406,12 @@ onMounted(() => {
   font-size: 13px;
 }
 
+.removed-file-note {
+  color: #9d8656;
+  font-size: 14px;
+  font-weight: 800;
+}
+
 @media (max-width: 700px) {
   .admin-page {
     width: min(100% - 32px, 1200px);
@@ -390,7 +428,8 @@ onMounted(() => {
   }
 
   .preview-box,
-  .music-preview {
+  .music-preview,
+  .removed-preview {
     min-height: 200px;
   }
 }

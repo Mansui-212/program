@@ -139,7 +139,12 @@ onMounted(() => {
           <img :src="user.avatar_url || '/static/images/avatars/maodie.jpg'" :alt="user.username" />
           <div>
             <div class="user-name-row">
-              <h2>{{ user.username }}</h2>
+              <RouterLink
+                class="user-profile-link"
+                :to="`/users/${formatUid(user.id)}`"
+              >
+                {{ user.username }}
+              </RouterLink>
               <span :class="{ admin: user.role === 'admin' }">{{ user.role === 'admin' ? '管理员' : '用户' }}</span>
             </div>
             <p>UID {{ formatUid(user.id) }} · 当前哈气值 <strong>{{ user.haki_value }}</strong></p>
@@ -306,6 +311,18 @@ onMounted(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+}
+
+.user-profile-link {
+  color: #25231f;
+  font-size: 23px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.user-profile-link:hover {
+  color: #9a7512;
+  text-decoration: underline;
 }
 
 .user-name-row h2 {
