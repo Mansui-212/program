@@ -16,6 +16,7 @@ defineOptions({
         <RouterLink to="/">首页</RouterLink>
         <RouterLink to="/memes">表情包档案</RouterLink>
         <RouterLink to="/music">哈基米音乐</RouterLink>
+        <RouterLink to="/chronicle">编年史</RouterLink>
         <RouterLink to="/submit">投稿</RouterLink>
       </nav>
 

@@ -71,6 +71,14 @@ onMounted(() => {
         </div>
         <b>→</b>
       </RouterLink>
+      <RouterLink to="/admin/chronicle">
+        <span>⌁</span>
+        <div>
+          <h2>编年史编辑台</h2>
+          <p>添加或整理历史节点，公开时间轴会自动更新。</p>
+        </div>
+        <b>→</b>
+      </RouterLink>
     </section>
   </main>
 </template>

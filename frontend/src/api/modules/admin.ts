@@ -1,6 +1,7 @@
 import http from '@/api/http'
 
 import type { AdminOverview, AdminSubmission, AdminUser, HakiRecord } from '@/types/admin'
+import type { ChronicleEvent, ChronicleEventPayload } from '@/types/chronicle'
 
 export interface GetAdminSubmissionsParams {
   submission_type?: 'meme' | 'music'
@@ -40,4 +41,20 @@ export function adjustAdminUserHaki(userId: number, changeValue: number, reason:
 
 export function getAdminUserHakiRecords(userId: number) {
   return http.get<HakiRecord[]>(`/v1/admin/users/${userId}/haki-records`)
+}
+
+export function getAdminChronicleEvents() {
+  return http.get<ChronicleEvent[]>('/v1/admin/chronicle')
+}
+
+export function createAdminChronicleEvent(payload: ChronicleEventPayload) {
+  return http.post<ChronicleEvent>('/v1/admin/chronicle', payload)
+}
+
+export function updateAdminChronicleEvent(eventId: number, payload: ChronicleEventPayload) {
+  return http.put<ChronicleEvent>(`/v1/admin/chronicle/${eventId}`, payload)
+}
+
+export function deleteAdminChronicleEvent(eventId: number) {
+  return http.delete(`/v1/admin/chronicle/${eventId}`)
 }

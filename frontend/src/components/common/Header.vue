@@ -48,6 +48,7 @@ watch(
         <RouterLink to="/characters">角色档案</RouterLink>
         <RouterLink to="/memes">表情包</RouterLink>
         <RouterLink to="/music">音乐</RouterLink>
+        <RouterLink to="/chronicle">编年史</RouterLink>
         <RouterLink to="/search">搜索</RouterLink>
       </nav>
 
@@ -101,6 +102,7 @@ watch(
         <RouterLink to="/characters" @click="closeMenu">角色档案</RouterLink>
         <RouterLink to="/memes" @click="closeMenu">表情包档案</RouterLink>
         <RouterLink to="/music" @click="closeMenu">哈基米音乐</RouterLink>
+        <RouterLink to="/chronicle" @click="closeMenu">编年史</RouterLink>
         <RouterLink to="/search" @click="closeMenu">搜索</RouterLink>
         <RouterLink to="/submit" @click="closeMenu">投稿</RouterLink>
 
