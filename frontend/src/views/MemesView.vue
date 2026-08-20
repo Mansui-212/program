@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getMemes } from '@/api/modules/memes'
 import MemePreviewModal from '@/components/MemePreviewModal.vue'
+import UserLink from '@/components/common/UserLink.vue'
 
 import type { Character } from '@/types/character'
 import type { Meme } from '@/types/meme'
@@ -174,6 +175,9 @@ onMounted(async () => {
 
             <div class="meme-meta">
               <span>{{ meme.source_name || '未知来源' }}</span>
+              <span>
+                作者：<UserLink :uid="meme.author_uid" :name="meme.author_name" />
+              </span>
               <span>浏览 {{ meme.view_count }}</span>
             </div>
           </div>

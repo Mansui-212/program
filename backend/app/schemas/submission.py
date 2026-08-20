@@ -19,6 +19,7 @@ class SubmissionRead(BaseModel):
     source_name: str | None = None
     source_url: str | None = None
     author_name: str | None = None
+    author_uid: str | None = None
     reject_reason: str | None = None
     reviewed_by: int | None = None
     reviewed_at: datetime | None = None

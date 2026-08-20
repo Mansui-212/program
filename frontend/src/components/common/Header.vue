@@ -56,7 +56,11 @@ watch(
 
         <template v-if="authStore.isLoggedIn && authStore.user">
           <RouterLink v-if="authStore.user.role === 'admin'" class="admin-link" to="/admin">管理后台</RouterLink>
-          <RouterLink class="profile-link" to="/profile" :aria-label="`${authStore.user.username} 的个人资料`">
+          <RouterLink
+            class="profile-link"
+            :to="`/users/${formatUid(authStore.user.id)}`"
+            :aria-label="`${authStore.user.username} 的公开资料`"
+          >
             <img
               class="user-avatar"
               :src="authStore.user.avatar_url || defaultAvatar"
@@ -103,7 +107,7 @@ watch(
         <div class="mobile-account">
           <template v-if="authStore.isLoggedIn && authStore.user">
             <RouterLink v-if="authStore.user.role === 'admin'" to="/admin" @click="closeMenu">⚙ 管理后台</RouterLink>
-            <RouterLink to="/profile" @click="closeMenu">
+            <RouterLink :to="`/users/${formatUid(authStore.user.id)}`" @click="closeMenu">
               <img :src="authStore.user.avatar_url || defaultAvatar" :alt="authStore.user.username" />
               <span>
                 <strong>{{ authStore.user.username }}</strong>

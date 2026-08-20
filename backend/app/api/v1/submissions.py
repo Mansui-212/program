@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.api.v1.auth import get_current_user
 from app.api.v1.users import is_valid_image_content
@@ -203,7 +203,8 @@ async def create_submission(
             character_id=primary_character_id,
             source_name=clean_optional(source_name) or "用户投稿",
             source_url=clean_optional(source_url),
-            author_name=clean_optional(author_name) or current_user.username,
+            author_name=current_user.username,
+            author_id=current_user.id,
             is_featured=False,
         )
     else:
@@ -215,7 +216,8 @@ async def create_submission(
             character_id=primary_character_id,
             source_name=clean_optional(source_name) or "用户投稿",
             source_url=clean_optional(source_url),
-            author_name=clean_optional(author_name) or current_user.username,
+            author_name=current_user.username,
+            author_id=current_user.id,
             is_featured=False,
         )
 
@@ -256,7 +258,8 @@ def list_my_submissions(
     statement = (
         select(Submission)
         .options(
-            selectinload(Submission.characters)
+            joinedload(Submission.user),
+            selectinload(Submission.characters),
         )
         .where(
             Submission.user_id == current_user.id,

@@ -64,6 +64,12 @@ class Meme(Base):
         nullable=True,
     )
 
+    author_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=True,
+        index=True,
+    )
+
     view_count: Mapped[int] = mapped_column(
         Integer,
         default=0,
@@ -112,6 +118,19 @@ class Meme(Base):
         back_populates="related_memes",
     )
 
+    author: Mapped["User | None"] = relationship(
+        "User",
+        back_populates="authored_memes",
+        foreign_keys=[author_id],
+    )
+
     @property
     def character_ids(self) -> list[int]:
         return [character.id for character in self.characters]
+
+    @property
+    def author_uid(self) -> str | None:
+        if self.author_id is None:
+            return None
+
+        return f"{self.author_id:05d}"

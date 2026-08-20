@@ -61,3 +61,15 @@ class User(Base):
         "HakiRecord",
         back_populates="user",
     )
+
+    authored_memes: Mapped[list["Meme"]] = relationship(
+        "Meme",
+        back_populates="author",
+        foreign_keys="Meme.author_id",
+    )
+
+    authored_music_tracks: Mapped[list["MusicTrack"]] = relationship(
+        "MusicTrack",
+        back_populates="author",
+        foreign_keys="MusicTrack.author_id",
+    )

@@ -135,3 +135,7 @@ class Submission(Base):
     @property
     def character_ids(self) -> list[int]:
         return [character.id for character in self.characters]
+
+    @property
+    def author_uid(self) -> str:
+        return f"{self.user_id:05d}"

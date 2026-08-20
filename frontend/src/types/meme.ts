@@ -10,6 +10,8 @@ export interface Meme {
   source_name: string | null
   source_url: string | null
   author_name: string | null
+  author_id: number | null
+  author_uid: string | null
   view_count: number
   download_count: number
   sort_order: number

@@ -2,7 +2,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.db.session import get_db
 from app.models.associations import meme_characters
@@ -23,7 +23,10 @@ def list_memes(
     keyword: str | None = Query(default=None),
     order: Literal["latest", "featured", "popular"] = Query(default="latest"),
 ):
-    statement = select(Meme).options(selectinload(Meme.characters))
+    statement = select(Meme).options(
+        joinedload(Meme.author),
+        selectinload(Meme.characters),
+    )
 
     if character_slug:
         character_id = db.scalar(
@@ -67,7 +70,7 @@ def list_latest_memes(
 ):
     statement = (
         select(Meme)
-        .options(selectinload(Meme.characters))
+        .options(joinedload(Meme.author), selectinload(Meme.characters))
         .order_by(Meme.created_at.desc(), Meme.id.desc())
         .limit(limit)
     )
@@ -82,7 +85,7 @@ def list_featured_memes(
 ):
     statement = (
         select(Meme)
-        .options(selectinload(Meme.characters))
+        .options(joinedload(Meme.author), selectinload(Meme.characters))
         .where(Meme.is_featured.is_(True))
         .order_by(Meme.sort_order.asc(), Meme.id.desc())
         .limit(limit)
@@ -98,7 +101,11 @@ def get_meme_detail(
 ):
     statement = (
         select(Meme)
-        .options(selectinload(Meme.character), selectinload(Meme.characters))
+        .options(
+            joinedload(Meme.author),
+            selectinload(Meme.character),
+            selectinload(Meme.characters),
+        )
         .where(Meme.slug == slug)
     )
 

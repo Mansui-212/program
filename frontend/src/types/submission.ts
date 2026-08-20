@@ -14,6 +14,7 @@ export interface Submission {
   source_name: string | null
   source_url: string | null
   author_name: string | null
+  author_uid: string | null
   reject_reason: string | null
   reviewed_by: number | null
   reviewed_at: string | null

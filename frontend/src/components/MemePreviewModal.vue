@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue'
 
 import { getMemeDetail } from '@/api/modules/memes'
+import UserLink from '@/components/common/UserLink.vue'
 
 import type { Meme, MemeDetail } from '@/types/meme'
 
@@ -93,7 +94,7 @@ watch(
 
               <div>
                 <span>作者</span>
-                <strong>{{ detail.author_name || '未知作者' }}</strong>
+                <strong><UserLink :uid="detail.author_uid" :name="detail.author_name" /></strong>
               </div>
 
               <div>

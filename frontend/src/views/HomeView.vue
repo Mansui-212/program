@@ -3,6 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import SearchBox from '@/components/search/SearchBox.vue'
+import UserLink from '@/components/common/UserLink.vue'
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getLatestMemes } from '@/api/modules/memes'
 import { getFeaturedMusicTracks } from '@/api/modules/musicTracks'
@@ -175,7 +176,9 @@ onMounted(() => {
               <p v-if="meme.description">{{ meme.description }}</p>
               <div class="meme-actions">
                 <span>{{ meme.file_type === 'gif' ? 'GIF 动图' : '图片' }}</span>
-                <span v-if="meme.author_name">收录：{{ meme.author_name }}</span>
+                <span v-if="meme.author_name">
+                  收录：<UserLink :uid="meme.author_uid" :name="meme.author_name" />
+                </span>
               </div>
             </div>
           </article>
@@ -204,7 +207,7 @@ onMounted(() => {
               <h3>{{ track.title }}</h3>
               <p>{{ track.description || '这首哈基米音乐正在整理资料。' }}</p>
               <div class="music-meta">
-                <span>{{ track.author_name || '未知作者' }}</span>
+                <span>制作：<UserLink :uid="track.author_uid" :name="track.author_name" /></span>
                 <span>播放 {{ track.play_count }}</span>
               </div>
               <audio class="music-audio" :src="track.audio_url" controls preload="metadata" />

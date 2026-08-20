@@ -12,6 +12,8 @@ export interface MusicTrack {
   source_name: string | null
   source_url: string | null
   author_name: string | null
+  author_id: number | null
+  author_uid: string | null
   play_count: number
   sort_order: number
   is_featured: boolean

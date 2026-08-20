@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import TurntablePlayer from '@/components/TurntablePlayer.vue'
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getMusicTracks } from '@/api/modules/musicTracks'
+import UserLink from '@/components/common/UserLink.vue'
 
 import type { Character } from '@/types/character'
 import type { MusicTrack } from '@/types/musicTrack'
@@ -249,7 +250,7 @@ onMounted(async () => {
                   播放中
                 </span>
               </h3>
-              <p>{{ track.author_name || '未知作者' }}</p>
+              <p>制作：<UserLink :uid="track.author_uid" :name="track.author_name" /></p>
               <div class="track-meta">
                 <span>{{ track.source_name || '未知来源' }}</span>
                 <span>播放 {{ track.play_count }}</span>

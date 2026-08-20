@@ -2,16 +2,17 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.v1.auth import get_current_user
 from app.db.session import get_db
+from app.models.submission import Submission
 from app.models.user import User
-from app.schemas.user import UserRead
+from app.schemas.user import UserPublicRead, UserPublicSubmissionRead, UserRead
 
 
 router = APIRouter()
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 STORAGE_DIR = PROJECT_ROOT / "storage"
@@ -83,3 +84,74 @@ async def upload_my_avatar(
     db.refresh(current_user)
 
     return current_user
+
+
+def get_user_by_uid(uid: str, db: Session) -> User:
+    try:
+        user_id = int(uid)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="用户不存在",
+        )
+
+    user = db.get(User, user_id)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="用户不存在",
+        )
+
+
+    return user
+
+
+@router.get("/{uid}/submissions", response_model=list[UserPublicSubmissionRead])
+def list_public_user_submissions(
+    uid: str,
+    db: Session = Depends(get_db),
+):
+    user = get_user_by_uid(uid, db)
+
+    statement = (
+        select(Submission)
+        .where(
+            Submission.user_id == user.id,
+            Submission.status == "approved",
+            Submission.content_deleted.is_(False),
+            Submission.content_id.is_not(None),
+        )
+        .order_by(Submission.created_at.desc(), Submission.id.desc())
+    )
+
+    return db.scalars(statement).all()
+
+
+@router.get("/{uid}", response_model=UserPublicRead)
+def get_public_user(
+    uid: str,
+    db: Session = Depends(get_db),
+):
+    user = get_user_by_uid(uid, db)
+
+    submission_count = db.scalar(
+        select(func.count())
+        .select_from(Submission)
+        .where(
+            Submission.user_id == user.id,
+            Submission.status == "approved",
+            Submission.content_deleted.is_(False),
+            Submission.content_id.is_not(None),
+        )
+    )
+
+    return UserPublicRead(
+        id=user.id,
+        uid=f"{user.id:05d}",
+        username=user.username,
+        avatar_url=user.avatar_url,
+        haki_value=user.haki_value,
+        created_at=user.created_at,
+        submission_count=submission_count or 0,
+    )
