@@ -11,6 +11,8 @@ from app.models.meme import Meme
 from app.models.music_track import MusicTrack
 from app.models.submission import Submission
 from app.models.user import User
+from app.schemas.admin import ContentFeaturedRead, ContentFeaturedUpdate
+from app.services.haki import add_haki
 
 
 router = APIRouter()
@@ -18,9 +20,6 @@ router = APIRouter()
 PROJECT_ROOT = Path(__file__).resolve().parents[5]
 STORAGE_DIR = PROJECT_ROOT / "storage"
 SUBMISSION_DIR = STORAGE_DIR / "uploads" / "submissions"
-PUBLISH_HAKI_VALUE = 10
-
-
 def delete_submission_file(file_url: str) -> None:
     static_prefix = "/static/"
 
@@ -57,7 +56,18 @@ def delete_content(
         author = db.get(User, submission.user_id)
 
         if author is not None:
-            reversal_value = min(PUBLISH_HAKI_VALUE, author.haki_value)
+            upload_action = "upload_meme" if content_type == "meme" else "upload_music"
+            upload_value = db.scalar(
+                select(HakiRecord.change_value)
+                .where(
+                    HakiRecord.user_id == author.id,
+                    HakiRecord.action == upload_action,
+                    HakiRecord.target_type == content_type,
+                    HakiRecord.target_id == content.id,
+                )
+                .order_by(HakiRecord.id.desc())
+            )
+            reversal_value = min(upload_value or 10, author.haki_value)
             author.haki_value -= reversal_value
 
             if reversal_value:
@@ -66,6 +76,9 @@ def delete_content(
                         user_id=author.id,
                         change_value=-reversal_value,
                         reason=f"内容被管理员下架：{submission.title}",
+                        action="content_removed",
+                        target_type=content_type,
+                        target_id=content.id,
                     )
                 )
 
@@ -79,6 +92,63 @@ def delete_content(
     )
     db.delete(content)
     db.commit()
+
+
+@router.put(
+    "/{content_type}/{content_id}/featured",
+    response_model=ContentFeaturedRead,
+)
+def update_content_featured(
+    content_type: str,
+    content_id: int,
+    data: ContentFeaturedUpdate,
+    _: User = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    if content_type == "meme":
+        content = db.get(Meme, content_id)
+    elif content_type == "music":
+        content = db.get(MusicTrack, content_id)
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="内容类型无效",
+        )
+
+    if content is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="内容不存在",
+        )
+
+    was_featured = content.is_featured
+    content.is_featured = data.is_featured
+
+    if data.is_featured and not was_featured and content.author_id is not None:
+        already_rewarded = db.scalar(
+            select(HakiRecord.id).where(
+                HakiRecord.user_id == content.author_id,
+                HakiRecord.action == "admin_pick",
+                HakiRecord.target_type == content_type,
+                HakiRecord.target_id == content.id,
+            )
+        )
+        author = db.get(User, content.author_id)
+        if already_rewarded is None and author is not None:
+            add_haki(
+                db,
+                author,
+                "admin_pick",
+                target_type=content_type,
+                target_id=content.id,
+            )
+
+    db.commit()
+    return ContentFeaturedRead(
+        id=content.id,
+        content_type=content_type,
+        is_featured=content.is_featured,
+    )
 
 
 

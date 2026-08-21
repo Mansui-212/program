@@ -64,6 +64,11 @@ const router = createRouter({
       component: () => import('@/views/ChronicleView.vue'),
     },
     {
+      path: '/haki',
+      name: 'haki-ranking',
+      component: () => import('@/views/HakiRankView.vue'),
+    },
+    {
       path: '/login',
       name: 'login',
       component: () => import('@/views/LoginView.vue'),

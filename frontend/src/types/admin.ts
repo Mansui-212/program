@@ -18,6 +18,10 @@ export interface HakiRecord {
   user_id: number
   change_value: number
   reason: string
+  action: string | null
+  target_type: string | null
+  target_id: number | null
+  source_user_id: number | null
   created_at: string
 }
 

@@ -29,6 +29,14 @@ export interface PublicSubmission {
   created_at: string
 }
 
+export interface HakiRankingUser {
+  id: number
+  uid: string
+  username: string
+  avatar_url: string | null
+  haki_value: number
+}
+
 export interface AuthResponse {
   access_token: string
   token_type: string

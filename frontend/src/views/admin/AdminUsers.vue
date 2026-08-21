@@ -175,7 +175,12 @@ onMounted(() => {
             <strong :class="{ minus: record.change_value < 0 }">
               {{ record.change_value > 0 ? '+' : '' }}{{ record.change_value }}
             </strong>
-            <span>{{ record.reason }}</span>
+            <span>
+              {{ record.reason }}
+              <small v-if="record.target_type && record.target_id">
+                · {{ record.target_type }} #{{ record.target_id }}
+              </small>
+            </span>
             <time>{{ new Date(record.created_at).toLocaleString() }}</time>
           </div>
         </div>

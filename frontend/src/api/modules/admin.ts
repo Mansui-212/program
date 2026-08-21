@@ -26,6 +26,16 @@ export function deleteAdminMusicTrack(contentId: number) {
   return http.delete(`/v1/admin/contents/music-tracks/${contentId}`)
 }
 
+export function updateAdminContentFeatured(
+  contentType: 'meme' | 'music',
+  contentId: number,
+  isFeatured: boolean,
+) {
+  return http.put(`/v1/admin/contents/${contentType}/${contentId}/featured`, {
+    is_featured: isFeatured,
+  })
+}
+
 export function getAdminUsers(keyword?: string) {
   return http.get<AdminUser[]>('/v1/admin/users', {
     params: keyword ? { keyword } : undefined,

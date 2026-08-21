@@ -55,6 +55,10 @@ def adjust_user_haki(
             user_id=user.id,
             change_value=data.change_value,
             reason=f"管理员 UID {admin.id} 调整：{data.reason.strip()}",
+            action="admin_adjust",
+            target_type="user",
+            target_id=user.id,
+            source_user_id=admin.id,
         )
     )
     db.commit()

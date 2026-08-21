@@ -1,8 +1,17 @@
 <script setup lang="ts">
+import axios from 'axios'
 import { ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 
+import {
+  createFavorite,
+  deleteFavorite,
+  getFavoriteStatus,
+  recordDownload,
+} from '@/api/modules/favorites'
 import { getMemeDetail } from '@/api/modules/memes'
 import UserLink from '@/components/common/UserLink.vue'
+import { useAuthStore } from '@/stores/auth'
 
 import type { Meme, MemeDetail } from '@/types/meme'
 
@@ -14,9 +23,30 @@ const emit = defineEmits<{
   (event: 'close'): void
 }>()
 
+const router = useRouter()
+const authStore = useAuthStore()
 const detail = ref<MemeDetail | null>(null)
 const loading = ref(false)
 const error = ref('')
+const isFavorited = ref(false)
+const favoriteLoading = ref(false)
+const actionMessage = ref('')
+
+async function loadFavoriteStatus() {
+  if (!detail.value || !authStore.isLoggedIn) {
+    isFavorited.value = false
+    return
+  }
+
+  try {
+    const response = await getFavoriteStatus('meme', detail.value.id)
+    isFavorited.value = response.data.is_favorited
+  } catch (reason) {
+    if (!axios.isAxiosError(reason) || reason.response?.status !== 401) {
+      console.error('加载收藏状态失败', reason)
+    }
+  }
+}
 
 async function loadDetail() {
   if (!props.meme) {
@@ -30,6 +60,7 @@ async function loadDetail() {
   try {
     const response = await getMemeDetail(props.meme.slug)
     detail.value = response.data
+    await loadFavoriteStatus()
   } catch (err) {
     console.error(err)
     error.value = '加载表情包详情失败'
@@ -46,6 +77,57 @@ function openOriginalImage() {
   if (!detail.value?.image_url) return
 
   window.open(detail.value.image_url, '_blank')
+}
+
+function requireLogin() {
+  if (authStore.isLoggedIn) return true
+
+  actionMessage.value = '登录后可以收藏作品，并为创作者增加哈气值。'
+  router.push('/login')
+  return false
+}
+
+async function toggleFavorite() {
+  if (!detail.value || !requireLogin()) return
+
+  favoriteLoading.value = true
+  actionMessage.value = ''
+
+  try {
+    if (isFavorited.value) {
+      await deleteFavorite('meme', detail.value.id)
+      isFavorited.value = false
+    } else {
+      await createFavorite('meme', detail.value.id)
+      isFavorited.value = true
+    }
+  } catch (reason) {
+    console.error('更新收藏失败', reason)
+    actionMessage.value = axios.isAxiosError<{ detail?: string }>(reason)
+      ? reason.response?.data?.detail || '收藏操作失败，请稍后再试。'
+      : '收藏操作失败，请稍后再试。'
+  } finally {
+    favoriteLoading.value = false
+  }
+}
+
+async function downloadImage() {
+  if (!detail.value) return
+
+  if (authStore.isLoggedIn) {
+    try {
+      await recordDownload('meme', detail.value.id)
+    } catch (reason) {
+      console.error('记录下载失败', reason)
+    }
+  }
+
+  const link = document.createElement('a')
+  link.href = detail.value.image_url
+  link.download = `${detail.value.slug}.png`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
 }
 
 watch(
@@ -106,8 +188,19 @@ watch(
             <div class="action-row">
               <button type="button" @click="openOriginalImage">查看原图</button>
 
-              <a :href="detail.image_url" :download="`${detail.slug}.png`">下载图片</a>
+              <button
+                type="button"
+                class="favorite-button"
+                :disabled="favoriteLoading"
+                @click="toggleFavorite"
+              >
+                {{ favoriteLoading ? '处理中...' : (isFavorited ? '★ 已收藏' : '☆ 收藏') }}
+              </button>
+
+              <button type="button" class="secondary-button" @click="downloadImage">下载图片</button>
             </div>
+
+            <p v-if="actionMessage" class="action-message">{{ actionMessage }}</p>
           </div>
         </div>
       </section>
@@ -262,6 +355,27 @@ watch(
 
 .action-row a {
   background: #fffdf7;
+}
+
+.action-row .favorite-button {
+  border-color: #f2b866;
+  background: #fff0c9;
+}
+
+.action-row .secondary-button {
+  background: #fffdf7;
+}
+
+.action-row button:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+
+.action-message {
+  margin: 14px 0 0;
+  color: #b24b4b;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 @media (max-width: 860px) {

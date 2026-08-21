@@ -49,6 +49,7 @@ watch(
         <RouterLink to="/memes">表情包</RouterLink>
         <RouterLink to="/music">音乐</RouterLink>
         <RouterLink to="/chronicle">编年史</RouterLink>
+        <RouterLink to="/haki">哈气榜</RouterLink>
         <RouterLink to="/search">搜索</RouterLink>
       </nav>
 
@@ -103,6 +104,7 @@ watch(
         <RouterLink to="/memes" @click="closeMenu">表情包档案</RouterLink>
         <RouterLink to="/music" @click="closeMenu">哈基米音乐</RouterLink>
         <RouterLink to="/chronicle" @click="closeMenu">编年史</RouterLink>
+        <RouterLink to="/haki" @click="closeMenu">哈气排行榜</RouterLink>
         <RouterLink to="/search" @click="closeMenu">搜索</RouterLink>
         <RouterLink to="/submit" @click="closeMenu">投稿</RouterLink>
 

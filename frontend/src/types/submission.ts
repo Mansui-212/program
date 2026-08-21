@@ -8,6 +8,7 @@ export interface Submission {
   file_url: string
   content_id: number | null
   content_deleted: boolean
+  content_is_featured?: boolean
   cover_url: string | null
   character_id: number | null
   character_ids: number[]

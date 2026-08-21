@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import axios from 'axios'
+import { nextTick, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import TurntablePlayer from '@/components/TurntablePlayer.vue'
 import { getFeaturedCharacters } from '@/api/modules/characters'
+import {
+  createFavorite,
+  deleteFavorite,
+  getFavoriteStatus,
+  recordDownload,
+} from '@/api/modules/favorites'
 import { getMusicTracks } from '@/api/modules/musicTracks'
 import UserLink from '@/components/common/UserLink.vue'
+import { useAuthStore } from '@/stores/auth'
 
 import type { Character } from '@/types/character'
 import type { MusicTrack } from '@/types/musicTrack'
@@ -13,6 +21,8 @@ import type { MusicTrack } from '@/types/musicTrack'
 const characters = ref<Character[]>([])
 const tracks = ref<MusicTrack[]>([])
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 const loading = ref(true)
 
 const selectedCharacterSlug = ref('')
@@ -21,6 +31,76 @@ const keyword = ref('')
 
 const currentTrack = ref<MusicTrack | null>(null)
 const isPlaying = ref(false)
+const isCurrentTrackFavorited = ref(false)
+const favoriteLoading = ref(false)
+const trackActionMessage = ref('')
+
+async function loadCurrentTrackFavoriteStatus() {
+  if (!currentTrack.value || !authStore.isLoggedIn) {
+    isCurrentTrackFavorited.value = false
+    return
+  }
+
+  try {
+    const response = await getFavoriteStatus('music', currentTrack.value.id)
+    isCurrentTrackFavorited.value = response.data.is_favorited
+  } catch (reason) {
+    if (!axios.isAxiosError(reason) || reason.response?.status !== 401) {
+      console.error('加载音乐收藏状态失败', reason)
+    }
+  }
+}
+
+function requireLoginForTrackAction() {
+  if (authStore.isLoggedIn) return true
+
+  trackActionMessage.value = '登录后可以收藏音乐，并为创作者增加哈气值。'
+  router.push('/login')
+  return false
+}
+
+async function toggleCurrentTrackFavorite() {
+  if (!currentTrack.value || !requireLoginForTrackAction()) return
+
+  favoriteLoading.value = true
+  trackActionMessage.value = ''
+
+  try {
+    if (isCurrentTrackFavorited.value) {
+      await deleteFavorite('music', currentTrack.value.id)
+      isCurrentTrackFavorited.value = false
+    } else {
+      await createFavorite('music', currentTrack.value.id)
+      isCurrentTrackFavorited.value = true
+    }
+  } catch (reason) {
+    console.error('更新音乐收藏失败', reason)
+    trackActionMessage.value = axios.isAxiosError<{ detail?: string }>(reason)
+      ? reason.response?.data?.detail || '收藏操作失败，请稍后再试。'
+      : '收藏操作失败，请稍后再试。'
+  } finally {
+    favoriteLoading.value = false
+  }
+}
+
+async function downloadCurrentTrack() {
+  if (!currentTrack.value) return
+
+  if (authStore.isLoggedIn) {
+    try {
+      await recordDownload('music', currentTrack.value.id)
+    } catch (reason) {
+      console.error('记录音乐下载失败', reason)
+    }
+  }
+
+  const link = document.createElement('a')
+  link.href = currentTrack.value.audio_url
+  link.download = `${currentTrack.value.slug}.mp3`
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+}
 
 async function loadCharacters() {
   const response = await getFeaturedCharacters()
@@ -76,6 +156,13 @@ async function selectTrack(track: MusicTrack) {
   await nextTick()
   isPlaying.value = true
 }
+
+watch(
+  () => [currentTrack.value?.id, authStore.isLoggedIn],
+  () => {
+    void loadCurrentTrackFavoriteStatus()
+  },
+)
 
 function selectCharacter(slug: string) {
   selectedCharacterSlug.value = slug
@@ -213,13 +300,23 @@ onMounted(async () => {
     </section>
 
     <section class="music-layout">
-      <TurntablePlayer
-        :track="currentTrack"
-        :is-playing="isPlaying"
-        @update:playing="handlePlayingChange"
-        @next="playNextTrack"
-        @prev="playPrevTrack"
-      />
+      <div class="turntable-column">
+        <TurntablePlayer
+          :track="currentTrack"
+          :is-playing="isPlaying"
+          @update:playing="handlePlayingChange"
+          @next="playNextTrack"
+          @prev="playPrevTrack"
+        />
+
+        <div v-if="currentTrack" class="track-actions">
+          <button type="button" :disabled="favoriteLoading" @click="toggleCurrentTrackFavorite">
+            {{ favoriteLoading ? '处理中...' : (isCurrentTrackFavorited ? '★ 已收藏' : '☆ 收藏这首') }}
+          </button>
+          <button type="button" class="download-button" @click="downloadCurrentTrack">下载音乐</button>
+        </div>
+        <p v-if="trackActionMessage" class="track-action-message">{{ trackActionMessage }}</p>
+      </div>
 
       <section class="playlist-panel">
         <p v-if="loading" class="loading-text">正在加载哈基米音乐...</p>
@@ -354,6 +451,45 @@ onMounted(async () => {
   align-items: start;
   gap: 28px;
   margin-top: 40px;
+}
+
+.turntable-column {
+  min-width: 0;
+}
+
+.track-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.track-actions button {
+  height: 42px;
+  padding: 0 18px;
+  border: 1px solid #f2bd62;
+  border-radius: 999px;
+  background: #fff0c9;
+  color: #594828;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.track-actions .download-button {
+  border-color: #eadfca;
+  background: #fffdf7;
+}
+
+.track-actions button:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+
+.track-action-message {
+  margin: 10px 0 0;
+  color: #b24b4b;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .playlist-panel {

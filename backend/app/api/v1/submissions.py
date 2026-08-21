@@ -10,12 +10,12 @@ from app.api.v1.auth import get_current_user
 from app.api.v1.users import is_valid_image_content
 from app.db.session import get_db
 from app.models.character import Character
-from app.models.haki_record import HakiRecord
 from app.models.meme import Meme
 from app.models.music_track import MusicTrack
 from app.models.submission import Submission
 from app.models.user import User
 from app.schemas.submission import SubmissionRead
+from app.services.haki import add_haki
 
 
 router = APIRouter()
@@ -42,7 +42,6 @@ ALLOWED_SUBMISSION_STATUSES = {"pending", "approved", "rejected", "deleted"}
 
 MAX_MEME_SIZE = 10 * 1024 * 1024
 MAX_MUSIC_SIZE = 30 * 1024 * 1024
-PUBLISH_HAKI_VALUE = 10
 
 
 def is_valid_mp3_content(content: bytes) -> bool:
@@ -226,13 +225,13 @@ async def create_submission(
     db.flush()
 
     submission.content_id = published_content.id
-    current_user.haki_value += PUBLISH_HAKI_VALUE
-    db.add(
-        HakiRecord(
-            user_id=current_user.id,
-            change_value=PUBLISH_HAKI_VALUE,
-            reason=f"作品发布：{cleaned_title}",
-        )
+    add_haki(
+        db,
+        current_user,
+        "upload_meme" if submission_type == "meme" else "upload_music",
+        target_type=submission_type,
+        target_id=published_content.id,
+        reason=f"作品发布：{cleaned_title}",
     )
 
     db.commit()

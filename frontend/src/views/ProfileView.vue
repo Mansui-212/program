@@ -5,7 +5,9 @@ import { useRouter } from 'vue-router'
 
 import { uploadMyAvatar } from '@/api/modules/users'
 import { getMySubmissions } from '@/api/modules/submissions'
+import { getMyFavorites } from '@/api/modules/favorites'
 import type { Submission } from '@/types/submission'
+import type { Favorite } from '@/types/favorite'
 
 import { useAuthStore } from '@/stores/auth'
 import { formatUid } from '@/utils/formatUid'
@@ -52,6 +54,11 @@ const submissionsLoading = ref(false)
 
 const submissionsError = ref('')
 
+const activeContentTab = ref<'submissions' | 'favorites'>('submissions')
+const myFavorites = ref<Favorite[]>([])
+const favoritesLoading = ref(false)
+const favoritesError = ref('')
+
 
 
 const visibleSubmissions = computed(() => {
@@ -59,6 +66,14 @@ const visibleSubmissions = computed(() => {
   return mySubmissions.value.slice(0, 6)
 
 })
+
+const favoriteMemes = computed(() => (
+  myFavorites.value.filter((favorite) => favorite.target_type === 'meme')
+))
+
+const favoriteMusic = computed(() => (
+  myFavorites.value.filter((favorite) => favorite.target_type === 'music')
+))
 
 
 
@@ -103,12 +118,41 @@ async function loadMySubmissions() {
 
 }
 
+async function loadMyFavorites() {
+
+  if (!authStore.isLoggedIn) {
+
+    return
+
+  }
+
+  favoritesLoading.value = true
+  favoritesError.value = ''
+
+  try {
+
+    const response = await getMyFavorites()
+    myFavorites.value = response.data
+
+  } catch (err) {
+
+    console.error('加载收藏内容失败', err)
+    favoritesError.value = '收藏内容加载失败'
+
+  } finally {
+
+    favoritesLoading.value = false
+
+  }
+}
+
 
 
 
 onMounted(() => {
 
   loadMySubmissions()
+  loadMyFavorites()
 
 })
 
@@ -284,11 +328,7 @@ function getFileUrl(url: string) {
     return ''
   }
 
-  if (url.startsWith('http')) {
-    return url
-  }
-
-  return `http://localhost:8000${url}`
+  return url
 }
 
 
@@ -416,10 +456,25 @@ function goLogin(){
 
 
 
+      <div class="profile-tabs" role="tablist" aria-label="个人内容">
+        <button
+          type="button"
+          :class="{ active: activeContentTab === 'submissions' }"
+          @click="activeContentTab = 'submissions'"
+        >
+          我的投稿
+        </button>
+        <button
+          type="button"
+          :class="{ active: activeContentTab === 'favorites' }"
+          @click="activeContentTab = 'favorites'"
+        >
+          我的收藏
+        </button>
+      </div>
+
       <!-- 我的投稿 -->
-
-
-      <section class="profile-content">
+      <section v-if="activeContentTab === 'submissions'" class="profile-content">
 
 
         <div class="content-header">
@@ -700,10 +755,57 @@ function goLogin(){
 
       </section>
 
+      <section v-else class="profile-content">
+        <div class="content-header">
+          <div>
+            <p class="section-kicker">MY FAVORITES</p>
+            <h2>我的收藏</h2>
+          </div>
+          <span class="submission-count">{{ myFavorites.length }} 条</span>
+        </div>
 
+        <p v-if="favoritesLoading" class="submission-status">正在整理你的收藏...</p>
+        <p v-else-if="favoritesError" class="submission-status submission-error">{{ favoritesError }}</p>
 
+        <div v-else-if="myFavorites.length === 0" class="submission-empty">
+          <div class="empty-icon">☆</div>
+          <h3>还没有收藏</h3>
+          <p>在表情包详情或音乐馆点一下收藏，喜欢的内容会出现在这里。</p>
+          <RouterLink to="/memes" class="submit-button">去看看表情包 →</RouterLink>
+        </div>
 
+        <div v-else class="favorite-groups">
+          <section class="favorite-group">
+            <h3>收藏的表情包</h3>
+            <p v-if="favoriteMemes.length === 0" class="favorite-empty">还没有收藏表情包。</p>
+            <a
+              v-for="favorite in favoriteMemes"
+              :key="favorite.id"
+              class="favorite-meme"
+              :href="favorite.image_url || '#'"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img :src="favorite.image_url || '/static/images/avatars/maodie.jpg'" :alt="favorite.title" />
+              <span>{{ favorite.title }}</span>
+            </a>
+          </section>
 
+          <section class="favorite-group">
+            <h3>收藏的音乐</h3>
+            <p v-if="favoriteMusic.length === 0" class="favorite-empty">还没有收藏音乐。</p>
+            <article v-for="favorite in favoriteMusic" :key="favorite.id" class="favorite-track">
+              <img v-if="favorite.cover_url" :src="favorite.cover_url" :alt="favorite.title" />
+              <span v-else class="music-placeholder">♪</span>
+              <div>
+                <strong>{{ favorite.title }}</strong>
+                <p>{{ favorite.author_name || '未知作者' }}</p>
+              </div>
+              <audio :src="favorite.audio_url || ''" controls preload="metadata" />
+            </article>
+          </section>
+        </div>
+      </section>
 
     </section>
 
@@ -1072,6 +1174,235 @@ function goLogin(){
 
   background:
     rgba(255,253,248,.75);
+
+}
+
+
+.profile-tabs {
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:10px;
+
+  margin-top:38px;
+
+}
+
+
+.profile-tabs button {
+
+  min-height:42px;
+
+  padding:0 18px;
+
+  border:1px solid #eadfc9;
+
+  border-radius:999px;
+
+  background:#fffdf7;
+
+  color:#6f6047;
+
+  font:inherit;
+
+  font-size:14px;
+
+  font-weight:900;
+
+  cursor:pointer;
+
+}
+
+
+.profile-tabs button.active {
+
+  border-color:#f6c534;
+
+  background:#f6c534;
+
+  color:#3b301b;
+
+}
+
+
+.profile-tabs + .profile-content {
+
+  margin-top:14px;
+
+}
+
+
+.favorite-groups {
+
+  display:grid;
+
+  gap:22px;
+
+}
+
+
+.favorite-group {
+
+  padding:22px;
+
+  border:1px solid #eadfc9;
+
+  border-radius:24px;
+
+  background:#fffdf7;
+
+}
+
+
+.favorite-group > h3 {
+
+  margin:0 0 15px;
+
+  color:#302d27;
+
+  font-size:18px;
+
+}
+
+
+.favorite-empty {
+
+  margin:0;
+
+  color:#8c7b5c;
+
+  font-size:14px;
+
+  font-weight:700;
+
+}
+
+
+.favorite-meme {
+
+  display:grid;
+
+  grid-template-columns:70px minmax(0,1fr);
+
+  align-items:center;
+
+  gap:14px;
+
+  min-height:80px;
+
+  margin-top:10px;
+
+  padding:7px;
+
+  border-radius:18px;
+
+  color:#423921;
+
+  font-size:15px;
+
+  font-weight:850;
+
+  text-decoration:none;
+
+}
+
+
+.favorite-meme:hover {
+
+  background:#fff3c8;
+
+}
+
+
+.favorite-meme img {
+
+  width:70px;
+
+  height:70px;
+
+  border-radius:14px;
+
+  object-fit:cover;
+
+  background:#f4ead7;
+
+}
+
+
+.favorite-track {
+
+  display:grid;
+
+  grid-template-columns:56px minmax(0,1fr);
+
+  gap:14px;
+
+  align-items:center;
+
+  margin-top:10px;
+
+  padding:12px;
+
+  border-radius:18px;
+
+  background:#fffaf0;
+
+}
+
+
+.favorite-track > img,
+.favorite-track > .music-placeholder {
+
+  display:grid;
+
+  width:56px;
+
+  height:56px;
+
+  place-items:center;
+
+  overflow:hidden;
+
+  border-radius:14px;
+
+  background:linear-gradient(135deg,#fff0bb,#ffdfe9);
+
+  color:#6e5728;
+
+  font-size:24px;
+
+  object-fit:cover;
+
+}
+
+
+.favorite-track strong {
+
+  color:#332f27;
+
+  font-size:15px;
+
+}
+
+
+.favorite-track p {
+
+  margin:5px 0 0;
+
+  color:#8c7b5c;
+
+  font-size:13px;
+
+}
+
+
+.favorite-track audio {
+
+  grid-column:1 / -1;
+
+  width:100%;
 
 }
 

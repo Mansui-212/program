@@ -9,7 +9,7 @@ from app.api.v1.auth import get_current_user
 from app.db.session import get_db
 from app.models.submission import Submission
 from app.models.user import User
-from app.schemas.user import UserPublicRead, UserPublicSubmissionRead, UserRead
+from app.schemas.user import UserPublicRead, UserPublicSubmissionRead, UserRankingRead, UserRead
 
 
 router = APIRouter()
@@ -105,6 +105,29 @@ def get_user_by_uid(uid: str, db: Session) -> User:
 
 
     return user
+
+
+@router.get("/ranking", response_model=list[UserRankingRead])
+def list_haki_ranking(
+    limit: int = 50,
+    db: Session = Depends(get_db),
+):
+    users = db.scalars(
+        select(User)
+        .order_by(User.haki_value.desc(), User.created_at.asc(), User.id.asc())
+        .limit(min(max(limit, 1), 100))
+    ).all()
+
+    return [
+        UserRankingRead(
+            id=user.id,
+            uid=f"{user.id:05d}",
+            username=user.username,
+            avatar_url=user.avatar_url,
+            haki_value=user.haki_value,
+        )
+        for user in users
+    ]
 
 
 @router.get("/{uid}/submissions", response_model=list[UserPublicSubmissionRead])

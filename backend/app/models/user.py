@@ -60,6 +60,13 @@ class User(Base):
     haki_records: Mapped[list["HakiRecord"]] = relationship(
         "HakiRecord",
         back_populates="user",
+        foreign_keys="HakiRecord.user_id",
+    )
+
+    favorites: Mapped[list["Favorite"]] = relationship(
+        "Favorite",
+        back_populates="user",
+        cascade="all, delete-orphan",
     )
 
     authored_memes: Mapped[list["Meme"]] = relationship(

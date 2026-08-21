@@ -6,6 +6,7 @@ import {
   deleteAdminMeme,
   deleteAdminMusicTrack,
   getAdminSubmissions,
+  updateAdminContentFeatured,
 } from '@/api/modules/admin'
 import UserLink from '@/components/common/UserLink.vue'
 
@@ -15,6 +16,7 @@ const submissions = ref<AdminSubmission[]>([])
 const selectedType = ref<'all' | 'meme' | 'music'>('all')
 const loading = ref(true)
 const deletingId = ref<number | null>(null)
+const featuringId = ref<number | null>(null)
 const error = ref('')
 const success = ref('')
 
@@ -76,6 +78,38 @@ async function removeContent(submission: AdminSubmission) {
   }
 }
 
+async function toggleFeatured(submission: AdminSubmission) {
+  if (!submission.content_id || submission.content_deleted) return
+
+  const nextValue = !submission.content_is_featured
+  const actionLabel = nextValue ? '精选' : '取消精选'
+
+  if (!window.confirm(`确认${actionLabel}“${submission.title}”吗？首次精选会给创作者增加 50 哈气值。`)) {
+    return
+  }
+
+  error.value = ''
+  success.value = ''
+  featuringId.value = submission.id
+
+  try {
+    await updateAdminContentFeatured(
+      submission.submission_type,
+      submission.content_id,
+      nextValue,
+    )
+    submission.content_is_featured = nextValue
+    success.value = nextValue
+      ? `已精选“${submission.title}”。`
+      : `已取消精选“${submission.title}”。`
+  } catch (reason) {
+    console.error('更新精选状态失败', reason)
+    error.value = getErrorMessage(reason, '更新精选状态失败，请稍后再试。')
+  } finally {
+    featuringId.value = null
+  }
+}
+
 onMounted(() => {
   void loadSubmissions()
 })
@@ -129,8 +163,8 @@ onMounted(() => {
         <div class="submission-copy">
           <div class="card-topline">
             <span>{{ submission.submission_type === 'meme' ? '表情包' : '音乐' }}</span>
-            <span :class="{ removed: submission.content_deleted }">
-              {{ submission.content_deleted ? '已下架' : '已发布' }}
+            <span :class="{ removed: submission.content_deleted, featured: submission.content_is_featured }">
+              {{ submission.content_deleted ? '已下架' : (submission.content_is_featured ? '已精选' : '已发布') }}
             </span>
           </div>
           <h2>{{ submission.title }}</h2>
@@ -161,6 +195,15 @@ onMounted(() => {
               查看原文件
             </a>
             <span v-else class="removed-file-note">原文件已移除</span>
+            <button
+              v-if="submission.content_id && !submission.content_deleted"
+              type="button"
+              class="feature-button"
+              :disabled="featuringId === submission.id"
+              @click="toggleFeatured(submission)"
+            >
+              {{ featuringId === submission.id ? '保存中...' : (submission.content_is_featured ? '取消精选' : '设为精选') }}
+            </button>
             <button
               v-if="submission.content_id && !submission.content_deleted"
               type="button"
@@ -244,6 +287,7 @@ onMounted(() => {
 
 .filter-row button,
 .refresh-button,
+.feature-button,
 .remove-button {
   height: 42px;
   padding: 0 16px;
@@ -354,6 +398,10 @@ onMounted(() => {
   color: #bd4747;
 }
 
+.card-topline .featured {
+  color: #8c6511;
+}
+
 .submission-copy h2 {
   margin: 10px 0 0;
   color: #25231f;
@@ -396,7 +444,14 @@ onMounted(() => {
   color: #af3e3e;
 }
 
-.remove-button:disabled {
+.feature-button {
+  border-color: #f0c350;
+  background: #fff2be;
+  color: #715517;
+}
+
+.remove-button:disabled,
+.feature-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

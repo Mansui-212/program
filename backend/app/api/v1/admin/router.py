@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.admin.contents import router as contents_router
 from app.api.v1.admin.chronicle import router as chronicle_router
+from app.api.v1.admin.haki_rules import router as haki_rules_router
 from app.api.v1.admin.dependencies import get_current_admin
 from app.api.v1.admin.submissions import router as submissions_router
 from app.api.v1.admin.users import router as users_router
@@ -41,3 +42,4 @@ router.include_router(submissions_router, prefix="/submissions", tags=["admin-su
 router.include_router(users_router, prefix="/users", tags=["admin-users"])
 router.include_router(contents_router, prefix="/contents", tags=["admin-contents"])
 router.include_router(chronicle_router, prefix="/chronicle", tags=["admin-chronicle"])
+router.include_router(haki_rules_router, prefix="/haki-rules", tags=["admin-haki-rules"])
