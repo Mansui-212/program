@@ -289,6 +289,7 @@ onUnmounted(() => {
               <p>{{ track.description || '这首哈基米音乐正在整理资料。' }}</p>
               <div class="music-meta">
                 <span>制作：<UserLink :uid="track.author_uid" :name="track.author_name" /></span>
+                <span v-if="track.source_author">来源作者：{{ track.source_author }}</span>
                 <span>播放 {{ track.play_count }}</span>
               </div>
               <audio class="music-audio" :src="track.audio_url" controls preload="metadata" />
