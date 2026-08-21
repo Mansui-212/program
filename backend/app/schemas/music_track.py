@@ -24,8 +24,10 @@ class MusicTrackRead(BaseModel):
     character_id: int | None = None
     character_ids: list[int] = []
     original_title: str | None = None
+    source_type: str
     source_name: str | None = None
     source_url: str | None = None
+    source_author: str | None = None
     author_name: str | None = None
     author_id: int | None = None
     author_uid: str | None = None

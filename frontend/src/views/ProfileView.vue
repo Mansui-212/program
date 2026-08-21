@@ -497,13 +497,19 @@ function goLogin(){
 
 
 
-          <span class="submission-count">
+          <div class="content-actions">
+            <span class="submission-count">
 
-            {{ mySubmissions.length }}
+              {{ mySubmissions.length }}
 
-            条
+              条
 
-          </span>
+            </span>
+
+            <RouterLink to="/submit" class="manage-submissions">
+              编辑投稿 →
+            </RouterLink>
+          </div>
 
 
         </div>
@@ -1486,6 +1492,25 @@ function goLogin(){
 
   font-weight:900;
 
+}
+
+.content-actions {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:10px;
+}
+
+.manage-submissions {
+  color:#846318;
+  font-size:14px;
+  font-weight:900;
+  text-decoration:none;
+}
+
+.manage-submissions:hover {
+  text-decoration:underline;
 }
 
 

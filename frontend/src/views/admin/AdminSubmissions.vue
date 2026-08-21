@@ -177,6 +177,27 @@ onMounted(() => {
             <span>哈气值 {{ submission.user.haki_value }}</span>
           </div>
 
+          <div v-if="submission.submission_type === 'music'" class="music-source-meta">
+            <span>
+              来源：{{
+                submission.source_type === 'video_upload'
+                  ? '上传视频自动提取'
+                  : submission.source_type === 'douyin'
+                    ? '抖音链接收录'
+                    : '上传 MP3'
+              }}
+            </span>
+            <span v-if="submission.source_author">视频作者：{{ submission.source_author }}</span>
+            <a
+              v-if="submission.source_url"
+              :href="submission.source_url"
+              target="_blank"
+              rel="noreferrer"
+            >
+              打开原链接 ↗
+            </a>
+          </div>
+
           <audio
             v-if="submission.submission_type === 'music' && !submission.content_deleted"
             class="preview-audio"
@@ -419,6 +440,22 @@ onMounted(() => {
   color: #9d8656;
   font-size: 13px;
   font-weight: 800;
+}
+
+.music-source-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+  color: #806f50;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.music-source-meta a {
+  color: #9a7512;
+  font-weight: 900;
+  text-decoration: none;
 }
 
 .preview-audio {

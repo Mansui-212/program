@@ -1,12 +1,10 @@
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.db.session import get_db
-from app.models.associations import music_track_characters
-from app.models.character import Character
 from app.models.music_track import MusicTrack
 from app.schemas.music_track import MusicTrackDetailRead, MusicTrackRead
 
@@ -19,7 +17,6 @@ def list_music_tracks(
     db: Session = Depends(get_db),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-    character_slug: str | None = Query(default=None),
     keyword: str | None = Query(default=None),
     order: Literal["latest", "featured", "popular"] = Query(default="latest"),
 ):
@@ -27,28 +24,6 @@ def list_music_tracks(
         joinedload(MusicTrack.author),
         selectinload(MusicTrack.characters),
     )
-
-    if character_slug:
-        character_id = db.scalar(
-            select(Character.id).where(Character.slug == character_slug)
-        )
-
-        if character_id is None:
-            return []
-
-        statement = (
-            statement.outerjoin(
-                music_track_characters,
-                MusicTrack.id == music_track_characters.c.music_track_id,
-            )
-            .where(
-                or_(
-                    MusicTrack.character_id == character_id,
-                    music_track_characters.c.character_id == character_id,
-                )
-            )
-            .distinct()
-        )
 
     if keyword:
         like_keyword = f"%{keyword}%"

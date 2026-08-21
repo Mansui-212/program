@@ -6,7 +6,7 @@ import SearchBox from '@/components/search/SearchBox.vue'
 import UserLink from '@/components/common/UserLink.vue'
 import { getFeaturedCharacters } from '@/api/modules/characters'
 import { getLatestMemes } from '@/api/modules/memes'
-import { getFeaturedMusicTracks } from '@/api/modules/musicTracks'
+import { getLatestMusicTracks } from '@/api/modules/musicTracks'
 import type { Character } from '@/types/character'
 import type { Meme } from '@/types/meme'
 import type { MusicTrack } from '@/types/musicTrack'
@@ -17,7 +17,7 @@ const charactersError = ref(false)
 const latestMemes = ref<Meme[]>([])
 const memesLoading = ref(true)
 const memesError = ref(false)
-const featuredMusicTracks = ref<MusicTrack[]>([])
+const latestMusicTracks = ref<MusicTrack[]>([])
 const musicLoading = ref(true)
 const musicError = ref(false)
 const homeSearchKeyword = ref('')
@@ -61,10 +61,10 @@ async function loadLatestMemes() {
   }
 }
 
-async function loadFeaturedMusicTracks() {
+async function loadLatestMusicTracks() {
   try {
-    const response = await getFeaturedMusicTracks(4)
-    featuredMusicTracks.value = response.data
+    const response = await getLatestMusicTracks(4)
+    latestMusicTracks.value = response.data
   } catch (error) {
     console.error('加载音乐推荐失败', error)
     musicError.value = true
@@ -76,7 +76,7 @@ async function loadFeaturedMusicTracks() {
 onMounted(() => {
   void loadCharacters()
   void loadLatestMemes()
-  void loadFeaturedMusicTracks()
+  void loadLatestMusicTracks()
 })
 </script>
 
@@ -188,16 +188,16 @@ onMounted(() => {
       <section id="music" class="section-wrap content-section">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">LISTEN TO HAKIMI</p>
-            <h2>哈基米改编音乐</h2>
+          <p class="eyebrow">LATEST HAKIMI MUSIC</p>
+          <h2>最新哈基米音乐</h2>
           </div>
           <RouterLink class="section-link" to="/music">查看全部音乐 <span>→</span></RouterLink>
         </div>
 
         <div class="music-grid">
           <p v-if="musicLoading" class="collection-message">正在加载哈基米音乐...</p>
-          <p v-else-if="musicError" class="collection-message">音乐推荐暂时无法加载。</p>
-          <article v-for="track in featuredMusicTracks" v-else :key="track.id" class="music-card">
+          <p v-else-if="musicError" class="collection-message">最新音乐暂时无法加载。</p>
+          <article v-for="track in latestMusicTracks" v-else :key="track.id" class="music-card">
             <div class="music-cover">
               <img v-if="track.cover_url" :src="track.cover_url" :alt="track.title" />
               <span v-else>♪</span>

@@ -39,8 +39,15 @@ class MusicTrack(Base):
     )
 
     cover_url: Mapped[str | None] = mapped_column(
-        String(255),
+        String(500),
         nullable=True,
+    )
+
+    source_type: Mapped[str] = mapped_column(
+        String(20),
+        default="upload",
+        server_default="upload",
+        nullable=False,
     )
 
     duration_seconds: Mapped[int | None] = mapped_column(
@@ -64,7 +71,12 @@ class MusicTrack(Base):
     )
 
     source_url: Mapped[str | None] = mapped_column(
-        String(255),
+        String(500),
+        nullable=True,
+    )
+
+    source_author: Mapped[str | None] = mapped_column(
+        String(100),
         nullable=True,
     )
 

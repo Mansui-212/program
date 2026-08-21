@@ -49,6 +49,13 @@ class Submission(Base):
         nullable=False,
     )
 
+    source_type: Mapped[str] = mapped_column(
+        String(20),
+        default="upload",
+        server_default="upload",
+        nullable=False,
+    )
+
     content_id: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,
@@ -77,7 +84,12 @@ class Submission(Base):
     )
 
     source_url: Mapped[str | None] = mapped_column(
-        String(255),
+        String(500),
+        nullable=True,
+    )
+
+    source_author: Mapped[str | None] = mapped_column(
+        String(100),
         nullable=True,
     )
 

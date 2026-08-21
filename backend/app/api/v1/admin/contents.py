@@ -13,6 +13,7 @@ from app.models.submission import Submission
 from app.models.user import User
 from app.schemas.admin import ContentFeaturedRead, ContentFeaturedUpdate
 from app.services.haki import add_haki
+from app.services.video_audio import remove_generated_music_assets
 
 
 router = APIRouter()
@@ -90,6 +91,11 @@ def delete_content(
         )
         .values(content_deleted=True)
     )
+
+    delete_submission_file(file_url)
+    if isinstance(content, MusicTrack) and content.source_type in {"douyin", "video_upload"}:
+        remove_generated_music_assets(content.audio_url, content.cover_url)
+
     db.delete(content)
     db.commit()
 

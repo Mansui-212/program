@@ -5,7 +5,6 @@ import type { MusicTrack, MusicTrackDetail } from '@/types/musicTrack'
 export interface GetMusicTracksParams {
   limit?: number
   offset?: number
-  character_slug?: string
   keyword?: string
   order?: 'latest' | 'featured' | 'popular'
 }

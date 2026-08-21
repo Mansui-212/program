@@ -9,8 +9,10 @@ export interface MusicTrack {
   character_id: number | null
   character_ids: number[]
   original_title: string | null
+  source_type: 'upload' | 'video_upload' | 'douyin'
   source_name: string | null
   source_url: string | null
+  source_author: string | null
   author_name: string | null
   author_id: number | null
   author_uid: string | null

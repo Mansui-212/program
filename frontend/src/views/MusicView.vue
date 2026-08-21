@@ -4,7 +4,6 @@ import { nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import TurntablePlayer from '@/components/TurntablePlayer.vue'
-import { getFeaturedCharacters } from '@/api/modules/characters'
 import {
   createFavorite,
   deleteFavorite,
@@ -15,17 +14,14 @@ import { getMusicTracks } from '@/api/modules/musicTracks'
 import UserLink from '@/components/common/UserLink.vue'
 import { useAuthStore } from '@/stores/auth'
 
-import type { Character } from '@/types/character'
 import type { MusicTrack } from '@/types/musicTrack'
 
-const characters = ref<Character[]>([])
 const tracks = ref<MusicTrack[]>([])
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const loading = ref(true)
 
-const selectedCharacterSlug = ref('')
 const selectedOrder = ref<'latest' | 'featured' | 'popular'>('featured')
 const keyword = ref('')
 
@@ -102,18 +98,12 @@ async function downloadCurrentTrack() {
   link.remove()
 }
 
-async function loadCharacters() {
-  const response = await getFeaturedCharacters()
-  characters.value = response.data
-}
-
 async function loadTracks() {
   loading.value = true
 
   try {
     const response = await getMusicTracks({
       limit: 50,
-      character_slug: selectedCharacterSlug.value || undefined,
       keyword: keyword.value || undefined,
       order: selectedOrder.value,
     })
@@ -163,11 +153,6 @@ watch(
     void loadCurrentTrackFavoriteStatus()
   },
 )
-
-function selectCharacter(slug: string) {
-  selectedCharacterSlug.value = slug
-  loadTracks()
-}
 
 function changeOrder(order: 'latest' | 'featured' | 'popular') {
   selectedOrder.value = order
@@ -226,9 +211,8 @@ async function playPrevTrack() {
   isPlaying.value = true
 }
 
-onMounted(async () => {
-  await loadCharacters()
-  await loadTracks()
+onMounted(() => {
+  void loadTracks()
 })
 </script>
 
@@ -250,26 +234,6 @@ onMounted(async () => {
         />
 
         <button type="button" @click="searchTracks">搜索</button>
-      </div>
-
-      <div class="filter-row">
-        <button
-          type="button"
-          :class="{ active: selectedCharacterSlug === '' }"
-          @click="selectCharacter('')"
-        >
-          全部
-        </button>
-
-        <button
-          v-for="character in characters"
-          :key="character.id"
-          type="button"
-          :class="{ active: selectedCharacterSlug === character.slug }"
-          @click="selectCharacter(character.slug)"
-        >
-          {{ character.name }}
-        </button>
       </div>
 
       <div class="filter-row">

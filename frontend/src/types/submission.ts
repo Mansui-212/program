@@ -6,6 +6,7 @@ export interface Submission {
   title: string
   description: string | null
   file_url: string
+  source_type: 'upload' | 'video_upload' | 'douyin'
   content_id: number | null
   content_deleted: boolean
   content_is_featured?: boolean
@@ -14,6 +15,7 @@ export interface Submission {
   character_ids: number[]
   source_name: string | null
   source_url: string | null
+  source_author: string | null
   author_name: string | null
   author_uid: string | null
   reject_reason: string | null
