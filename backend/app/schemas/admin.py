@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -50,6 +51,16 @@ class ContentFeaturedRead(BaseModel):
     id: int
     content_type: str
     is_featured: bool
+
+
+class ContentStatusUpdate(BaseModel):
+    status: Literal["active", "removed"]
+
+
+class ContentStatusRead(BaseModel):
+    id: int
+    content_type: str
+    status: Literal["active", "withdrawn", "removed"]
 
 
 class AdminOverviewRead(BaseModel):

@@ -9,6 +9,7 @@ export interface Submission {
   source_type: 'upload' | 'video_upload' | 'douyin'
   content_id: number | null
   content_deleted: boolean
+  content_status: 'active' | 'withdrawn' | 'removed'
   content_is_featured?: boolean
   cover_url: string | null
   character_id: number | null

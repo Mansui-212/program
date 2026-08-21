@@ -9,6 +9,7 @@ from app.models.music_track import MusicTrack
 from app.models.submission import Submission
 from app.models.user import User
 from app.schemas.admin import AdminSubmissionRead
+from app.services.content_status import populate_submission_content_statuses
 
 
 router = APIRouter()
@@ -74,10 +75,13 @@ def list_admin_submissions(
     } if music_ids else {}
 
     for item in submissions:
+        # Keep historical submissions visible while exposing the current content state.
         item.content_is_featured = (
             meme_featured.get(item.content_id, False)
             if item.submission_type == "meme"
             else music_featured.get(item.content_id, False)
         )
+
+    populate_submission_content_statuses(db, submissions)
 
     return submissions

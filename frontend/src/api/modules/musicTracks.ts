@@ -34,3 +34,7 @@ export function getFeaturedMusicTracks(limit = 8) {
 export function getMusicTrackDetail(slug: string) {
   return http.get<MusicTrackDetail>(`/v1/music-tracks/${slug}`)
 }
+
+export function withdrawMusicTrack(trackId: number) {
+  return http.delete(`/v1/music-tracks/${trackId}/withdraw`)
+}

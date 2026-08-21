@@ -17,6 +17,12 @@ export function getPublicUserSubmissions(uid: string) {
   return http.get<PublicSubmission[]>(`/v1/users/${uid}/submissions`)
 }
 
+// 当前项目的 UID 是 users.id 的五位格式化展示值。
+// 该接口只返回仍处于 active 状态的公开作品。
+export function getUserSubmissions(uid: string) {
+  return getPublicUserSubmissions(uid)
+}
+
 export function getHakiRanking(limit = 50) {
   return http.get<HakiRankingUser[]>('/v1/users/ranking', { params: { limit } })
 }

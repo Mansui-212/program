@@ -7,23 +7,22 @@ import { useAuthStore } from '@/stores/auth'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-{
-  path: '/characters',
-  name: 'characters',
-  component: () => import('@/views/CharactersView.vue'),
-},
+    {
+      path: '/characters',
+      name: 'characters',
+      component: () => import('@/views/CharactersView.vue'),
+    },
 
-{
- path:"/users/:uid",
-
- name:"user-profile",
-
- component:
- ()=>import(
- "@/views/UserProfileView.vue"
- )
-
-},
+    {
+      path: '/users/:uid/submissions',
+      name: 'user-submissions',
+      component: () => import('@/views/UserSubmissionsView.vue'),
+    },
+    {
+      path: '/users/:uid',
+      name: 'user-profile',
+      component: () => import('@/views/UserProfileView.vue'),
+    },
 
     {
       path: '/',
@@ -84,6 +83,11 @@ const router = createRouter({
       component: () => import('@/views/ProfileView.vue'),
     },
     {
+      path: '/profile/submissions',
+      name: 'my-submissions',
+      component: () => import('@/views/MySubmissionsView.vue'),
+    },
+    {
       path: '/submit',
       name: 'submit',
       component: () => import('@/views/SubmitView.vue'),
@@ -98,6 +102,12 @@ const router = createRouter({
       path: '/admin/submissions',
       name: 'admin-submissions',
       component: () => import('@/views/admin/AdminSubmissions.vue'),
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/memes/batch',
+      name: 'admin-meme-batch-upload',
+      component: () => import('@/views/admin/AdminMemeBatchUpload.vue'),
       meta: { requiresAdmin: true },
     },
     {

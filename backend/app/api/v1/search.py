@@ -80,6 +80,7 @@ def search_site(
         select(Meme)
         .options(selectinload(Meme.characters))
         .where(
+            Meme.status == "active",
             or_(
                 Meme.title.like(like_keyword),
                 Meme.description.like(like_keyword),
@@ -100,6 +101,7 @@ def search_site(
         select(MusicTrack)
         .options(selectinload(MusicTrack.characters))
         .where(
+            MusicTrack.status == "active",
             or_(
                 MusicTrack.title.like(like_keyword),
                 MusicTrack.description.like(like_keyword),

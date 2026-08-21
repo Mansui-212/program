@@ -77,7 +77,15 @@ function getErrorMessage(reason: unknown, fallback: string) {
 }
 
 function getPublishLabel(submission: Submission) {
-  return submission.content_deleted ? '已下架' : '已发布'
+  if (submission.content_deleted || submission.content_status === 'removed') {
+    return '已下架'
+  }
+
+  return submission.content_status === 'withdrawn' ? '已撤回' : '已发布'
+}
+
+function canEditSubmission(submission: Submission) {
+  return !submission.content_deleted && submission.content_status === 'active'
 }
 
 async function loadCharacters() {
@@ -438,10 +446,21 @@ onMounted(() => {
             </div>
 
             <div class="submission-actions">
-              <button type="button" class="edit-submission-button" @click="openSubmissionEditor(submission)">
+              <button
+                v-if="canEditSubmission(submission)"
+                type="button"
+                class="edit-submission-button"
+                @click="openSubmissionEditor(submission)"
+              >
                 编辑资料
               </button>
-              <a :href="submission.file_url" target="_blank" rel="noreferrer">查看内容</a>
+              <a
+                v-if="canEditSubmission(submission)"
+                :href="submission.file_url"
+                target="_blank"
+                rel="noreferrer"
+              >查看内容</a>
+              <span v-else class="submission-history-note">该作品仅保留在投稿历史中</span>
             </div>
           </article>
         </div>
@@ -829,6 +848,12 @@ button:disabled {
   font-weight: 800;
   text-decoration: none;
   white-space: nowrap;
+}
+
+.submission-history-note {
+  color: #8c7b5b;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .edit-submission-button {

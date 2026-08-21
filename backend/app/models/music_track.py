@@ -50,6 +50,14 @@ class MusicTrack(Base):
         nullable=False,
     )
 
+    status: Mapped[str] = mapped_column(
+        String(20),
+        default="active",
+        server_default="active",
+        nullable=False,
+        index=True,
+    )
+
     duration_seconds: Mapped[int | None] = mapped_column(
         Integer,
         nullable=True,

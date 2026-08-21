@@ -35,3 +35,7 @@ export function getFeaturedMemes(limit = 8) {
 export function getMemeDetail(slug: string) {
   return http.get<MemeDetail>(`/v1/memes/${slug}`)
 }
+
+export function withdrawMeme(memeId: number) {
+  return http.delete(`/v1/memes/${memeId}/withdraw`)
+}

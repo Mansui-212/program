@@ -9,6 +9,7 @@ from app.models.user import User
 DEFAULT_HAKI_RULES = {
     "upload_meme": 10,
     "upload_music": 10,
+    "batch_upload": 2,
     "favorite_get": 5,
     "download_get": 1,
     "admin_pick": 50,
@@ -17,6 +18,7 @@ DEFAULT_HAKI_RULES = {
 ACTION_REASONS = {
     "upload_meme": "发布表情包",
     "upload_music": "发布音乐",
+    "batch_upload": "批量导入表情包",
     "favorite_get": "作品被收藏",
     "download_get": "作品被下载",
     "admin_pick": "作品被管理员精选",
@@ -37,16 +39,17 @@ def add_haki(
     target_id: int | None = None,
     source_user_id: int | None = None,
     reason: str | None = None,
+    value: int | None = None,
 ) -> HakiRecord | None:
-    value = get_haki_rule_value(db, action)
+    reward_value = get_haki_rule_value(db, action) if value is None else value
 
-    if value == 0:
+    if reward_value <= 0:
         return None
 
-    user.haki_value += value
+    user.haki_value += reward_value
     record = HakiRecord(
         user_id=user.id,
-        change_value=value,
+        change_value=reward_value,
         reason=reason or ACTION_REASONS.get(action, action),
         action=action,
         target_type=target_type,

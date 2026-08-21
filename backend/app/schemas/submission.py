@@ -14,6 +14,7 @@ class SubmissionRead(BaseModel):
     source_type: str
     content_id: int | None = None
     content_deleted: bool
+    content_status: str = "active"
     cover_url: str | None = None
     character_id: int | None = None
     character_ids: list[int] = []

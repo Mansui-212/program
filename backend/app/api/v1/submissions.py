@@ -1,5 +1,6 @@
 
 from pathlib import Path
+from hashlib import sha256
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
@@ -16,6 +17,7 @@ from app.models.music_track import MusicTrack
 from app.models.submission import Submission
 from app.models.user import User
 from app.schemas.submission import SubmissionRead, SubmissionUpdate
+from app.services.content_status import populate_submission_content_statuses
 from app.services.haki import add_haki
 from app.services.video_audio import VideoAudioError, extract_music_from_video
 
@@ -175,6 +177,7 @@ async def create_submission(
     cover_url: str | None = None
     source_author: str | None = None
     duration_seconds: int | None = None
+    image_hash: str | None = None
 
     if submission_type == "meme":
         if cleaned_source_type != "upload":
@@ -203,6 +206,16 @@ async def create_submission(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="投稿文件内容无效",
+            )
+
+        image_hash = sha256(content).hexdigest()
+        duplicate_meme_id = db.scalar(
+            select(Meme.id).where(Meme.image_hash == image_hash)
+        )
+        if duplicate_meme_id is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="该图片已收录到表情包档案",
             )
 
         file_url = save_upload_file(
@@ -316,6 +329,7 @@ async def create_submission(
             title=cleaned_title,
             description=clean_optional(description),
             image_url=file_url,
+            image_hash=image_hash,
             file_type="gif" if content_type == "image/gif" else "image",
             character_id=primary_character_id,
             source_name=clean_optional(source_name) or "用户投稿",
@@ -419,6 +433,11 @@ def update_my_submission(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="正式表情包内容不存在，无法编辑",
             )
+        if content.status != "active":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="该表情包已撤回或下架，无法编辑",
+            )
 
         characters = load_selected_characters(data.character_ids, db)
         primary_character_id = characters[0].id if characters else None
@@ -435,6 +454,11 @@ def update_my_submission(
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="正式音乐内容不存在，无法编辑",
+            )
+        if content.status != "active":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="该音乐已撤回或下架，无法编辑",
             )
 
         content.source_name = source_name or "用户上传"
@@ -482,7 +506,6 @@ def list_my_submissions(
         )
         .where(
             Submission.user_id == current_user.id,
-            Submission.content_deleted == False,    
         )
         .order_by(
             Submission.created_at.desc(),
@@ -499,6 +522,5 @@ def list_my_submissions(
 
 
     submissions = db.scalars(statement).all()
-
-
+    populate_submission_content_statuses(db, submissions)
     return submissions

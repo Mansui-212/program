@@ -31,3 +31,23 @@ export interface AdminOverview {
   user_count: number
   total_haki_value: number
 }
+
+export type ContentStatus = 'active' | 'withdrawn' | 'removed'
+
+export type BatchMemeUploadStatus = 'imported' | 'duplicate' | 'invalid'
+
+export interface BatchMemeUploadItem {
+  filename: string
+  status: BatchMemeUploadStatus
+  title: string | null
+  detail: string | null
+}
+
+export interface BatchMemeUploadResult {
+  total_candidates: number
+  imported: number
+  skipped_duplicates: number
+  skipped_invalid: number
+  haki_gained: number
+  items: BatchMemeUploadItem[]
+}

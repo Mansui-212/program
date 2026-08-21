@@ -48,6 +48,7 @@ def list_character_memes(
         .outerjoin(meme_characters, Meme.id == meme_characters.c.meme_id)
         .options(selectinload(Meme.characters))
         .where(
+            Meme.status == "active",
             or_(
                 Meme.character_id == character_id,
                 meme_characters.c.character_id == character_id,
@@ -79,6 +80,7 @@ def list_character_music_tracks(
         )
         .options(selectinload(MusicTrack.characters))
         .where(
+            MusicTrack.status == "active",
             or_(
                 MusicTrack.character_id == character_id,
                 music_track_characters.c.character_id == character_id,

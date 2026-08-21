@@ -2,11 +2,13 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.api.v1.auth import get_current_user
 from app.db.session import get_db
+from app.models.meme import Meme
+from app.models.music_track import MusicTrack
 from app.models.submission import Submission
 from app.models.user import User
 from app.schemas.user import UserPublicRead, UserPublicSubmissionRead, UserRankingRead, UserRead
@@ -107,6 +109,46 @@ def get_user_by_uid(uid: str, db: Session) -> User:
     return user
 
 
+def active_public_content_clause():
+    return or_(
+        and_(
+            Submission.submission_type == "meme",
+            Meme.status == "active",
+        ),
+        and_(
+            Submission.submission_type == "music",
+            MusicTrack.status == "active",
+        ),
+    )
+
+
+def public_submission_statement(user_id: int):
+    return (
+        select(Submission)
+        .outerjoin(
+            Meme,
+            and_(
+                Submission.submission_type == "meme",
+                Submission.content_id == Meme.id,
+            ),
+        )
+        .outerjoin(
+            MusicTrack,
+            and_(
+                Submission.submission_type == "music",
+                Submission.content_id == MusicTrack.id,
+            ),
+        )
+        .where(
+            Submission.user_id == user_id,
+            Submission.status == "approved",
+            Submission.content_deleted.is_(False),
+            Submission.content_id.is_not(None),
+            active_public_content_clause(),
+        )
+    )
+
+
 @router.get("/ranking", response_model=list[UserRankingRead])
 def list_haki_ranking(
     limit: int = 50,
@@ -138,13 +180,7 @@ def list_public_user_submissions(
     user = get_user_by_uid(uid, db)
 
     statement = (
-        select(Submission)
-        .where(
-            Submission.user_id == user.id,
-            Submission.status == "approved",
-            Submission.content_deleted.is_(False),
-            Submission.content_id.is_not(None),
-        )
+        public_submission_statement(user.id)
         .order_by(Submission.created_at.desc(), Submission.id.desc())
     )
 
@@ -160,13 +196,7 @@ def get_public_user(
 
     submission_count = db.scalar(
         select(func.count())
-        .select_from(Submission)
-        .where(
-            Submission.user_id == user.id,
-            Submission.status == "approved",
-            Submission.content_deleted.is_(False),
-            Submission.content_id.is_not(None),
-        )
+        .select_from(public_submission_statement(user.id).subquery())
     )
 
     return UserPublicRead(

@@ -102,38 +102,25 @@ watch(
         <h2>TA 的投稿</h2>
         <p>已向基米小站提交 {{ user.submission_count }} 个作品。</p>
 
-        <div v-if="submissions.length" class="contribution-columns">
-          <section class="contribution-group">
-            <h3>TA 的表情包</h3>
-            <p v-if="memeSubmissions.length === 0" class="empty-copy">暂未发布表情包。</p>
-            <a
-              v-for="submission in memeSubmissions"
-              :key="submission.id"
-              class="meme-submission"
-              :href="submission.file_url"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <img :src="submission.file_url" :alt="submission.title" />
-              <span>{{ submission.title }}</span>
-            </a>
-          </section>
-
-          <section class="contribution-group">
-            <h3>TA 的音乐</h3>
-            <p v-if="musicSubmissions.length === 0" class="empty-copy">暂未发布音乐。</p>
-            <article v-for="submission in musicSubmissions" :key="submission.id" class="music-submission">
-              <span class="music-mark">♪</span>
-              <div>
-                <strong>{{ submission.title }}</strong>
-                <p>{{ submission.description || '哈基米音乐投稿' }}</p>
-              </div>
-              <audio :src="submission.file_url" controls preload="metadata" />
-            </article>
-          </section>
+        <div class="contribution-summary">
+          <div>
+            <span class="summary-icon">🖼</span>
+            <strong>表情包</strong>
+            <small>{{ memeSubmissions.length }} 个</small>
+          </div>
+          <div>
+            <span class="summary-icon">🎵</span>
+            <strong>音乐</strong>
+            <small>{{ musicSubmissions.length }} 首</small>
+          </div>
         </div>
 
-        <p v-else class="empty-copy">TA 还没有公开发布作品。</p>
+        <RouterLink
+          :to="`/users/${user.uid}/submissions`"
+          class="submission-button"
+        >
+          查看全部投稿 →
+        </RouterLink>
       </section>
     </template>
   </main>
@@ -247,6 +234,54 @@ h2 {
 .submission-area > p:last-child {
   margin: 14px 0 0;
   line-height: 1.7;
+}
+
+.contribution-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.contribution-summary > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 18px;
+  border: 1px solid #eadfca;
+  border-radius: 22px;
+  background: #fffdf7;
+  color: #594828;
+}
+
+.contribution-summary small {
+  color: #8a7550;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.summary-icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff0be;
+}
+
+.submission-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  margin-top: 22px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: #f6c534;
+  color: #352b1b;
+  font-weight: 900;
+  text-decoration: none;
 }
 
 .contribution-columns {
@@ -364,6 +399,10 @@ h2 {
   }
 
   .contribution-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .contribution-summary {
     grid-template-columns: 1fr;
   }
 }

@@ -6,6 +6,8 @@ import { useRouter } from 'vue-router'
 import { uploadMyAvatar } from '@/api/modules/users'
 import { getMySubmissions } from '@/api/modules/submissions'
 import { getMyFavorites } from '@/api/modules/favorites'
+import { withdrawMeme } from '@/api/modules/memes'
+import { withdrawMusicTrack } from '@/api/modules/musicTracks'
 import type { Submission } from '@/types/submission'
 import type { Favorite } from '@/types/favorite'
 
@@ -53,6 +55,8 @@ const mySubmissions = ref<Submission[]>([])
 const submissionsLoading = ref(false)
 
 const submissionsError = ref('')
+const submissionNotice = ref('')
+const withdrawingSubmissionId = ref<number | null>(null)
 
 const activeContentTab = ref<'submissions' | 'favorites'>('submissions')
 const myFavorites = ref<Favorite[]>([])
@@ -63,7 +67,12 @@ const favoritesError = ref('')
 
 const visibleSubmissions = computed(() => {
 
-  return mySubmissions.value.slice(0, 6)
+  // 管理员下架（以及旧版已物理删除）的内容不再出现在用户个人中心；
+  // 用户主动撤回的内容则作为自己的投稿历史保留。
+  return mySubmissions.value.filter((submission) => (
+    !submission.content_deleted
+      && submission.content_status !== 'removed'
+  ))
 
 })
 
@@ -143,6 +152,55 @@ async function loadMyFavorites() {
 
     favoritesLoading.value = false
 
+  }
+}
+
+function getContentStatusLabel(submission: Submission) {
+  if (submission.content_deleted || submission.content_status === 'removed') {
+    return '管理员下架'
+  }
+
+  if (submission.content_status === 'withdrawn') {
+    return '已撤回'
+  }
+
+  return '已发布'
+}
+
+function canWithdrawSubmission(submission: Submission) {
+  return Boolean(
+    submission.content_id
+      && !submission.content_deleted
+      && submission.content_status === 'active',
+  )
+}
+
+async function withdrawSubmission(submission: Submission) {
+  if (!submission.content_id || !canWithdrawSubmission(submission)) return
+
+  const confirmed = window.confirm(
+    `确定撤回“${submission.title}”吗？撤回后将不再公开显示，但会保留在你的投稿历史与管理员记录中。`,
+  )
+  if (!confirmed) return
+
+  submissionsError.value = ''
+  submissionNotice.value = ''
+  withdrawingSubmissionId.value = submission.id
+
+  try {
+    if (submission.submission_type === 'meme') {
+      await withdrawMeme(submission.content_id)
+    } else {
+      await withdrawMusicTrack(submission.content_id)
+    }
+
+    submission.content_status = 'withdrawn'
+    submissionNotice.value = `已撤回“${submission.title}”。哈气值与历史记录不会受到影响。`
+  } catch (reason) {
+    console.error('撤回投稿失败', reason)
+    submissionsError.value = getErrorMessage(reason, '撤回失败，请稍后重试。')
+  } finally {
+    withdrawingSubmissionId.value = null
   }
 }
 
@@ -500,11 +558,15 @@ function goLogin(){
           <div class="content-actions">
             <span class="submission-count">
 
-              {{ mySubmissions.length }}
+              {{ visibleSubmissions.length }}
 
               条
 
             </span>
+
+            <RouterLink to="/profile/submissions" class="manage-submissions">
+              查看所有投稿 →
+            </RouterLink>
 
             <RouterLink to="/submit" class="manage-submissions">
               编辑投稿 →
@@ -515,8 +577,22 @@ function goLogin(){
         </div>
 
 
+        <p class="withdraw-hint">
+          已发布的作品可随时撤回。撤回后不再公开展示，但会保留在你的投稿历史中。
+        </p>
 
 
+
+
+
+        <p
+          v-if="submissionNotice"
+          class="submission-status submission-success"
+        >
+
+          {{ submissionNotice }}
+
+        </p>
 
         <!-- 加载 -->
 
@@ -554,7 +630,7 @@ function goLogin(){
 
 
         <div
-          v-else-if="mySubmissions.length === 0"
+          v-else-if="visibleSubmissions.length === 0"
           class="submission-empty"
         >
 
@@ -661,7 +737,9 @@ function goLogin(){
 
 
 
-                <span class="submission-type">
+                <div class="submission-badges">
+
+                  <span class="submission-type">
 
                   {{
                     submission.submission_type === 'meme'
@@ -669,7 +747,16 @@ function goLogin(){
                     : '音乐'
                   }}
 
-                </span>
+                  </span>
+
+                  <span
+                    class="submission-state"
+                    :class="submission.content_status"
+                  >
+                    {{ getContentStatusLabel(submission) }}
+                  </span>
+
+                </div>
 
 
 
@@ -708,6 +795,7 @@ function goLogin(){
 
 
                   <a
+                    v-if="submission.content_status === 'active' && !submission.content_deleted"
                     :href="getFileUrl(submission.file_url)"
                     target="_blank"
                     rel="noopener noreferrer"
@@ -716,6 +804,20 @@ function goLogin(){
                     查看内容 →
 
                   </a>
+
+                  <span v-else>
+                    该作品仅保留在投稿历史中
+                  </span>
+
+                  <button
+                    v-if="canWithdrawSubmission(submission)"
+                    type="button"
+                    class="withdraw-button"
+                    :disabled="withdrawingSubmissionId === submission.id"
+                  @click="withdrawSubmission(submission)"
+                  >
+                    {{ withdrawingSubmissionId === submission.id ? '撤回中...' : '↶ 撤回作品' }}
+                  </button>
 
 
 
@@ -734,25 +836,6 @@ function goLogin(){
 
 
           </div>
-
-
-
-
-
-
-          <!-- 第17.3步 -->
-
-          <RouterLink
-            v-if="mySubmissions.length > 6"
-            to="/my-submissions"
-            class="view-all-submissions"
-          >
-
-            查看全部投稿 →
-
-          </RouterLink>
-
-
 
 
         </div>
@@ -1724,6 +1807,50 @@ function goLogin(){
 
 }
 
+.submission-badges {
+
+  display:flex;
+
+  flex-wrap:wrap;
+
+  gap:8px;
+
+}
+
+.submission-state {
+
+  display:inline-flex;
+
+  padding:5px 10px;
+
+  border-radius:999px;
+
+  background:#dff3dd;
+
+  color:#397448;
+
+  font-size:12px;
+
+  font-weight:900;
+
+}
+
+.submission-state.withdrawn {
+
+  background:#f0ece4;
+
+  color:#746653;
+
+}
+
+.submission-state.removed {
+
+  background:#ffe2e5;
+
+  color:#a1424f;
+
+}
+
 
 
 
@@ -1840,6 +1967,71 @@ function goLogin(){
 
 
   text-decoration:underline;
+
+}
+
+.withdraw-hint {
+
+  margin:12px 0 0;
+
+  color:#8b7754;
+
+  font-size:13px;
+
+  line-height:1.65;
+
+}
+
+.withdraw-button {
+
+  display:inline-flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  min-height:34px;
+
+  padding:0 13px;
+
+  border:1px solid #e5b4b4;
+
+  border-radius:999px;
+
+  background:#fff1f1;
+
+  color:#a44343;
+
+  font:inherit;
+
+  font-size:13px;
+
+  font-weight:900;
+
+  cursor:pointer;
+
+  transition:
+    background .2s ease,
+    border-color .2s ease,
+    transform .2s ease;
+
+}
+
+.withdraw-button:hover:not(:disabled) {
+
+  border-color:#d66d6d;
+
+  background:#ffe1e1;
+
+  transform:translateY(-1px);
+
+}
+
+.withdraw-button:disabled {
+
+  opacity:.55;
+
+  cursor:not-allowed;
 
 }
 
@@ -2072,6 +2264,12 @@ function goLogin(){
 
 
   color:#c85b5b;
+
+}
+
+.submission-success {
+
+  color:#3b8f52;
 
 }
 

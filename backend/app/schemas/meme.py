@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -39,3 +40,19 @@ class MemeRead(BaseModel):
 
 class MemeDetailRead(MemeRead):
     character: MemeCharacterRead | None = None
+
+
+class BatchMemeUploadItemRead(BaseModel):
+    filename: str
+    status: Literal["imported", "duplicate", "invalid"]
+    title: str | None = None
+    detail: str | None = None
+
+
+class BatchMemeUploadRead(BaseModel):
+    total_candidates: int
+    imported: int
+    skipped_duplicates: int
+    skipped_invalid: int
+    haki_gained: int
+    items: list[BatchMemeUploadItemRead]

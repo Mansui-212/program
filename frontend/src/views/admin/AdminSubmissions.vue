@@ -6,6 +6,7 @@ import {
   deleteAdminMeme,
   deleteAdminMusicTrack,
   getAdminSubmissions,
+  updateAdminContentStatus,
   updateAdminContentFeatured,
 } from '@/api/modules/admin'
 import UserLink from '@/components/common/UserLink.vue'
@@ -19,6 +20,22 @@ const deletingId = ref<number | null>(null)
 const featuringId = ref<number | null>(null)
 const error = ref('')
 const success = ref('')
+
+function isContentActive(submission: AdminSubmission) {
+  return !submission.content_deleted && submission.content_status === 'active'
+}
+
+function getContentStatusLabel(submission: AdminSubmission) {
+  if (submission.content_deleted || submission.content_status === 'removed') {
+    return '已下架'
+  }
+
+  if (submission.content_status === 'withdrawn') {
+    return '用户撤回'
+  }
+
+  return submission.content_is_featured ? '已精选' : '已发布'
+}
 
 function getErrorMessage(reason: unknown, fallback: string) {
   if (axios.isAxiosError<{ detail?: string }>(reason)) {
@@ -51,9 +68,9 @@ function changeType(type: 'all' | 'meme' | 'music') {
 }
 
 async function removeContent(submission: AdminSubmission) {
-  if (!submission.content_id || submission.content_deleted) return
+  if (!submission.content_id || submission.content_deleted || submission.content_status === 'removed') return
 
-  const confirmed = window.confirm(`确认下架“${submission.title}”吗？对应用户将扣回这份内容获得的 10 哈气值。`)
+  const confirmed = window.confirm(`确认下架“${submission.title}”吗？作品与历史会保留，之后可恢复发布。`)
 
   if (!confirmed) return
 
@@ -68,8 +85,9 @@ async function removeContent(submission: AdminSubmission) {
       await deleteAdminMusicTrack(submission.content_id)
     }
 
-    submission.content_deleted = true
-    success.value = `已下架“${submission.title}”，并完成哈气值回退。`
+    submission.content_status = 'removed'
+    submission.content_is_featured = false
+    success.value = `已下架“${submission.title}”，作品与历史记录已保留。`
   } catch (reason) {
     console.error('下架内容失败', reason)
     error.value = getErrorMessage(reason, '下架失败，请稍后再试。')
@@ -78,8 +96,30 @@ async function removeContent(submission: AdminSubmission) {
   }
 }
 
+async function restoreContent(submission: AdminSubmission) {
+  if (!submission.content_id || submission.content_deleted || isContentActive(submission)) return
+
+  const confirmed = window.confirm(`确认恢复“${submission.title}”的公开展示吗？`)
+  if (!confirmed) return
+
+  error.value = ''
+  success.value = ''
+  deletingId.value = submission.id
+
+  try {
+    await updateAdminContentStatus(submission.submission_type, submission.content_id, 'active')
+    submission.content_status = 'active'
+    success.value = `已恢复“${submission.title}”的公开展示。`
+  } catch (reason) {
+    console.error('恢复内容失败', reason)
+    error.value = getErrorMessage(reason, '恢复失败，请稍后再试。')
+  } finally {
+    deletingId.value = null
+  }
+}
+
 async function toggleFeatured(submission: AdminSubmission) {
-  if (!submission.content_id || submission.content_deleted) return
+  if (!submission.content_id || !isContentActive(submission)) return
 
   const nextValue = !submission.content_is_featured
   const actionLabel = nextValue ? '精选' : '取消精选'
@@ -163,8 +203,8 @@ onMounted(() => {
         <div class="submission-copy">
           <div class="card-topline">
             <span>{{ submission.submission_type === 'meme' ? '表情包' : '音乐' }}</span>
-            <span :class="{ removed: submission.content_deleted, featured: submission.content_is_featured }">
-              {{ submission.content_deleted ? '已下架' : (submission.content_is_featured ? '已精选' : '已发布') }}
+            <span :class="{ removed: submission.content_deleted || submission.content_status === 'removed', withdrawn: submission.content_status === 'withdrawn', featured: submission.content_is_featured && submission.content_status === 'active' }">
+              {{ getContentStatusLabel(submission) }}
             </span>
           </div>
           <h2>{{ submission.title }}</h2>
@@ -217,7 +257,7 @@ onMounted(() => {
             </a>
             <span v-else class="removed-file-note">原文件已移除</span>
             <button
-              v-if="submission.content_id && !submission.content_deleted"
+              v-if="submission.content_id && isContentActive(submission)"
               type="button"
               class="feature-button"
               :disabled="featuringId === submission.id"
@@ -226,13 +266,22 @@ onMounted(() => {
               {{ featuringId === submission.id ? '保存中...' : (submission.content_is_featured ? '取消精选' : '设为精选') }}
             </button>
             <button
-              v-if="submission.content_id && !submission.content_deleted"
+              v-if="submission.content_id && !submission.content_deleted && submission.content_status !== 'removed'"
               type="button"
               class="remove-button"
               :disabled="deletingId === submission.id"
               @click="removeContent(submission)"
             >
               {{ deletingId === submission.id ? '下架中...' : '下架内容' }}
+            </button>
+            <button
+              v-if="submission.content_id && !submission.content_deleted && !isContentActive(submission)"
+              type="button"
+              class="restore-button"
+              :disabled="deletingId === submission.id"
+              @click="restoreContent(submission)"
+            >
+              {{ deletingId === submission.id ? '恢复中...' : '恢复发布' }}
             </button>
             <span v-else-if="!submission.content_deleted" class="legacy-note">历史记录无关联内容</span>
           </div>
@@ -419,6 +468,10 @@ onMounted(() => {
   color: #bd4747;
 }
 
+.card-topline .withdrawn {
+  color: #897558;
+}
+
 .card-topline .featured {
   color: #8c6511;
 }
@@ -487,8 +540,20 @@ onMounted(() => {
   color: #715517;
 }
 
+.restore-button {
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid #a9d4af;
+  border-radius: 999px;
+  background: #ecf9eb;
+  color: #397448;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .remove-button:disabled,
-.feature-button:disabled {
+.feature-button:disabled,
+.restore-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

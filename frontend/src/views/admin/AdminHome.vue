@@ -63,6 +63,14 @@ onMounted(() => {
         </div>
         <b>→</b>
       </RouterLink>
+      <RouterLink to="/admin/memes/batch">
+        <span>▦</span>
+        <div>
+          <h2>表情包批量导入</h2>
+          <p>上传图片或 ZIP，一次收录同一角色的表情包素材。</p>
+        </div>
+        <b>→</b>
+      </RouterLink>
       <RouterLink to="/admin/users">
         <span>✦</span>
         <div>
@@ -158,10 +166,18 @@ onMounted(() => {
   line-height: 1;
 }
 
-.yellow { background: #fff0b8; }
-.pink { background: #ffdfe9; }
-.green { background: #dff3dd; }
-.purple { background: #e9e0ff; }
+.yellow {
+  background: #fff0b8;
+}
+.pink {
+  background: #ffdfe9;
+}
+.green {
+  background: #dff3dd;
+}
+.purple {
+  background: #e9e0ff;
+}
 
 .admin-actions {
   display: grid;
@@ -182,7 +198,9 @@ onMounted(() => {
   color: inherit;
   text-decoration: none;
   box-shadow: 0 16px 34px rgba(79, 61, 32, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .admin-actions a:hover {

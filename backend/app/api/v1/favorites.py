@@ -18,7 +18,7 @@ router = APIRouter()
 
 def get_target(db: Session, target_type: str, target_id: int) -> Meme | MusicTrack:
     target = db.get(Meme, target_id) if target_type == "meme" else db.get(MusicTrack, target_id)
-    if target is None:
+    if target is None or target.status != "active":
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="收藏内容不存在")
     return target
 
@@ -138,8 +138,18 @@ def list_my_favorites(
 
     meme_ids = [favorite.target_id for favorite in favorites if favorite.target_type == "meme"]
     music_ids = [favorite.target_id for favorite in favorites if favorite.target_type == "music"]
-    memes = {item.id: item for item in db.scalars(select(Meme).where(Meme.id.in_(meme_ids))).all()} if meme_ids else {}
-    tracks = {item.id: item for item in db.scalars(select(MusicTrack).where(MusicTrack.id.in_(music_ids))).all()} if music_ids else {}
+    memes = {
+        item.id: item
+        for item in db.scalars(
+            select(Meme).where(Meme.id.in_(meme_ids), Meme.status == "active")
+        ).all()
+    } if meme_ids else {}
+    tracks = {
+        item.id: item
+        for item in db.scalars(
+            select(MusicTrack).where(MusicTrack.id.in_(music_ids), MusicTrack.status == "active")
+        ).all()
+    } if music_ids else {}
 
     items: list[FavoriteRead] = []
     for favorite in favorites:

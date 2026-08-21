@@ -1,6 +1,13 @@
 import http from '@/api/http'
 
-import type { AdminOverview, AdminSubmission, AdminUser, HakiRecord } from '@/types/admin'
+import type {
+  AdminOverview,
+  AdminSubmission,
+  AdminUser,
+  BatchMemeUploadResult,
+  ContentStatus,
+  HakiRecord,
+} from '@/types/admin'
 import type { ChronicleEvent, ChronicleEventPayload } from '@/types/chronicle'
 
 export interface GetAdminSubmissionsParams {
@@ -26,6 +33,26 @@ export function deleteAdminMusicTrack(contentId: number) {
   return http.delete(`/v1/admin/contents/music-tracks/${contentId}`)
 }
 
+export function batchUploadAdminMemes(payload: {
+  files: File[]
+  characterId: number
+  sourceName?: string
+}) {
+  const formData = new FormData()
+
+  for (const file of payload.files) {
+    formData.append('files', file)
+  }
+
+  formData.append('character_id', String(payload.characterId))
+
+  if (payload.sourceName?.trim()) {
+    formData.append('source_name', payload.sourceName.trim())
+  }
+
+  return http.post<BatchMemeUploadResult>('/v1/memes/batch-upload', formData)
+}
+
 export function updateAdminContentFeatured(
   contentType: 'meme' | 'music',
   contentId: number,
@@ -34,6 +61,17 @@ export function updateAdminContentFeatured(
   return http.put(`/v1/admin/contents/${contentType}/${contentId}/featured`, {
     is_featured: isFeatured,
   })
+}
+
+export function updateAdminContentStatus(
+  contentType: 'meme' | 'music',
+  contentId: number,
+  status: 'active' | 'removed',
+) {
+  return http.put<{ id: number; content_type: string; status: ContentStatus }>(
+    `/v1/admin/contents/${contentType}/${contentId}/status`,
+    { status },
+  )
 }
 
 export function getAdminUsers(keyword?: string) {
