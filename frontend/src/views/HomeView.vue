@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 import SearchBox from '@/components/search/SearchBox.vue'
@@ -22,6 +22,49 @@ const musicLoading = ref(true)
 const musicError = ref(false)
 const homeSearchKeyword = ref('')
 const router = useRouter()
+
+const heroSlides = [
+  { src: '/images/hero/hakimi1.jpg', position: 'center 42%' },
+  { src: '/images/hero/hakimi2.jpg', position: 'center 38%' },
+  { src: '/images/hero/hakimi3.jpg', position: 'center 45%' },
+  { src: '/images/hero/hakimi4.jpg', position: 'center 38%' },
+  { src: '/images/hero/hakimi5.jpg', position: 'center center' },
+  { src: '/images/hero/hakimi6.jpg', position: 'center 42%' },
+]
+
+const currentHero = ref(0)
+let heroTimer: ReturnType<typeof setInterval> | undefined
+
+function nextHero() {
+  currentHero.value = (currentHero.value + 1) % heroSlides.length
+}
+
+function prevHero() {
+  currentHero.value = (currentHero.value - 1 + heroSlides.length) % heroSlides.length
+}
+
+function startHeroAutoplay() {
+  if (heroTimer) {
+    clearInterval(heroTimer)
+  }
+
+  heroTimer = setInterval(nextHero, 5000)
+}
+
+function showNextHero() {
+  nextHero()
+  startHeroAutoplay()
+}
+
+function showPrevHero() {
+  prevHero()
+  startHeroAutoplay()
+}
+
+function goHero(index: number) {
+  currentHero.value = index
+  startHeroAutoplay()
+}
 
 async function submitHomeSearch() {
   const keyword = homeSearchKeyword.value.trim()
@@ -77,12 +120,33 @@ onMounted(() => {
   void loadCharacters()
   void loadLatestMemes()
   void loadLatestMusicTracks()
+  startHeroAutoplay()
+})
+
+onUnmounted(() => {
+  if (heroTimer) {
+    clearInterval(heroTimer)
+  }
 })
 </script>
 
 <template>
   <div id="top">
       <section class="hero section-wrap" aria-labelledby="hero-title">
+        <div class="hero-slides" aria-hidden="true">
+          <div
+            v-for="(slide, index) in heroSlides"
+            :key="slide.src"
+            class="hero-slide"
+            :class="{ active: index === currentHero }"
+            :style="{
+              backgroundImage: `url(${slide.src})`,
+              backgroundPosition: slide.position,
+            }"
+          ></div>
+        </div>
+        <div class="hero-mask" aria-hidden="true"></div>
+
         <div class="hero-copy">
           <p class="eyebrow">HAKIMI LITTLE STATION</p>
           <h1 id="hero-title">基米小站</h1>
@@ -101,21 +165,38 @@ onMounted(() => {
             </div>
           </div>
           <div class="hero-actions">
-            <a class="button button-primary" href="#characters">探索角色 <span>→</span></a>
-            <button class="button button-secondary" type="button">随机来一张 <span>↗</span></button>
+            <RouterLink class="button button-primary" to="/characters">探索角色 <span>→</span></RouterLink>
+            <RouterLink class="button button-secondary" to="/memes">随机来一张 <span>↗</span></RouterLink>
           </div>
         </div>
 
-        <div class="hero-art" aria-label="基米小站视觉占位">
-          <span class="sun-orb">☼</span>
-          <span class="bubble bubble-one">哈</span>
-          <span class="bubble bubble-two">咪</span>
-          <div class="hero-card hero-card-main">
-            <span class="hero-card-label">今日收录</span>
-            <strong>把快乐<br />放大一点</strong>
-            <span class="hero-card-arrow">↗</span>
-          </div>
-          <div class="hero-card hero-card-small">温柔 · 有趣 · 正在发生</div>
+        <button
+          type="button"
+          class="hero-control hero-prev"
+          aria-label="上一张首页图片"
+          @click="showPrevHero"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="hero-control hero-next"
+          aria-label="下一张首页图片"
+          @click="showNextHero"
+        >
+          ›
+        </button>
+
+        <div class="hero-dots" aria-label="首页图片切换">
+          <button
+            v-for="(_, index) in heroSlides"
+            :key="index"
+            type="button"
+            :class="{ active: index === currentHero }"
+            :aria-label="`切换到第 ${index + 1} 张首页图片`"
+            :aria-current="index === currentHero ? 'true' : undefined"
+            @click="goHero(index)"
+          ></button>
         </div>
       </section>
 
@@ -413,20 +494,46 @@ onMounted(() => {
 
 .hero {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1.02fr) minmax(350px, 0.98fr);
-  align-items: center;
   min-height: 490px;
   margin-top: 14px;
   padding: 58px clamp(28px, 6vw, 72px);
   border: 1px solid #f0e4ca;
   border-radius: 34px;
-  background: linear-gradient(120deg, #fff6cc 0%, #fff9e8 52%, #ffe9ec 100%);
   overflow: hidden;
 }
 
+.hero-slides,
+.hero-mask {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  opacity: 0;
+  transform: scale(1.03);
+  transition: opacity 0.7s ease, transform 5s ease;
+}
+
+.hero-slide.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.hero-mask {
+  background:
+    linear-gradient(90deg, rgba(255, 250, 237, 0.96) 0%, rgba(255, 250, 237, 0.86) 40%, rgba(255, 250, 237, 0.26) 100%),
+    linear-gradient(0deg, rgba(70, 53, 30, 0.14), transparent 42%);
+}
+
 .hero-copy {
+  position: relative;
+  z-index: 1;
   min-width: 0;
+  max-width: 560px;
 }
 
 .eyebrow {
@@ -543,106 +650,59 @@ onMounted(() => {
   color: #554930;
 }
 
-.hero-art {
+.hero-control {
   position: relative;
-  min-height: 330px;
-}
-
-.sun-orb {
   position: absolute;
-  top: 8px;
-  right: 6%;
+  z-index: 2;
+  top: 50%;
   display: grid;
-  width: 92px;
-  height: 92px;
+  width: 46px;
+  height: 46px;
   place-items: center;
   border-radius: 50%;
-  background: #ffd85a;
-  color: #9a6c11;
-  font-size: 48px;
-  transform: rotate(-15deg);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: rgba(255, 253, 247, 0.78);
+  box-shadow: 0 8px 22px rgba(82, 60, 29, 0.16);
+  color: #493f2d;
+  font-size: 34px;
+  line-height: 1;
+  backdrop-filter: blur(8px);
+  transform: translateY(-50%);
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.bubble {
+.hero-control:hover {
+  background: #fffdf7;
+  transform: translateY(-50%) scale(1.06);
+}
+
+.hero-prev { left: 24px; }
+.hero-next { right: 24px; }
+
+.hero-dots {
   position: absolute;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: #825e64;
-  font-weight: 800;
-}
-
-.bubble-one {
-  top: 42px;
-  left: 8%;
-  width: 55px;
-  height: 55px;
-  background: #ffc9d1;
-  transform: rotate(-13deg);
-}
-
-.bubble-two {
-  right: 4%;
-  bottom: 22px;
-  width: 43px;
-  height: 43px;
-  background: #dcebd9;
-  color: #4e784c;
-  transform: rotate(15deg);
-}
-
-.hero-card {
-  position: absolute;
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 25px;
-  box-shadow: 0 18px 40px rgba(148, 112, 50, 0.16);
-}
-
-.hero-card-main {
-  top: 88px;
-  right: 13%;
+  z-index: 2;
+  bottom: 24px;
+  left: 50%;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: min(270px, 70%);
-  min-height: 210px;
-  padding: 26px;
-  background: linear-gradient(145deg, #fff 0%, #fff9e9 100%);
-  transform: rotate(5deg);
+  gap: 9px;
+  transform: translateX(-50%);
 }
 
-.hero-card-label {
-  color: #ab8b55;
-  font-size: 12px;
-  font-weight: 700;
+.hero-dots button {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 1px 4px rgba(65, 46, 20, 0.18);
+  transition: width 0.2s ease, background 0.2s ease;
 }
 
-.hero-card-main strong {
-  color: #3e3a31;
-  font-size: 28px;
-  line-height: 1.25;
-  letter-spacing: -0.06em;
-}
-
-.hero-card-arrow {
-  align-self: flex-end;
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: 10px;
-  background: #ffdb54;
-}
-
-.hero-card-small {
-  bottom: 18px;
-  left: 10%;
-  padding: 13px 17px;
-  background: #f5d8e7;
-  color: #75505d;
-  font-size: 12px;
-  font-weight: 750;
-  transform: rotate(-5deg);
+.hero-dots button.active {
+  width: 28px;
+  background: #f6c83f;
 }
 
 .content-section {
@@ -1100,31 +1160,6 @@ onMounted(() => {
 }
 
 @media (max-width: 900px) {
-  .topbar {
-    grid-template-columns: auto 1fr;
-    gap: 16px;
-  }
-
-  .main-nav {
-    justify-content: flex-end;
-  }
-
-  .nav-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-end;
-  }
-
-  .hero {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .hero-art {
-    max-width: 510px;
-    width: 100%;
-    margin: 0 auto;
-  }
-
   .character-grid,
   .meme-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1191,9 +1226,9 @@ onMounted(() => {
   }
 
   .hero {
-    min-height: 0;
+    min-height: 500px;
     margin-top: 5px;
-    padding: 40px 24px 20px;
+    padding: 54px 52px 72px;
     border-radius: 25px;
   }
 
@@ -1205,26 +1240,16 @@ onMounted(() => {
     max-width: 280px;
   }
 
-  .hero-art {
-    min-height: 282px;
+  .hero-control {
+    width: 38px;
+    height: 38px;
+    font-size: 29px;
   }
 
-  .hero-card-main {
-    top: 58px;
-    right: 10%;
-    min-height: 178px;
-    padding: 21px;
-  }
+  .hero-prev { left: 10px; }
+  .hero-next { right: 10px; }
 
-  .hero-card-main strong {
-    font-size: 24px;
-  }
-
-  .sun-orb {
-    width: 72px;
-    height: 72px;
-    font-size: 37px;
-  }
+  .hero-dots { bottom: 16px; }
 
   .content-section,
   .contribute-section {
@@ -1314,6 +1339,51 @@ onMounted(() => {
     align-items: flex-start;
     flex-direction: column;
     padding-bottom: 26px;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero {
+    min-height: 530px;
+    padding: 48px 26px 70px;
+  }
+
+  .hero h1 {
+    font-size: 52px;
+  }
+
+  .hero-slogan {
+    font-size: 20px;
+  }
+
+  .hero-actions {
+    gap: 9px;
+  }
+
+  .hero-actions .button {
+    flex: 1;
+    padding: 0 13px;
+  }
+
+  .hero-control {
+    top: auto;
+    bottom: 13px;
+    width: 32px;
+    height: 32px;
+    font-size: 25px;
+    transform: none;
+  }
+
+  .hero-control:hover {
+    transform: scale(1.04);
+  }
+
+  .hero-prev { left: 20px; }
+  .hero-next { right: 20px; }
+
+  .hero-dots {
+    bottom: 25px;
+    gap: 7px;
   }
 }
 </style>
